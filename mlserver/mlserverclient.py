@@ -21,7 +21,7 @@ thread_image = ZeroMQImageInput(context);
 thread_image.start()
 
 thread_yolo = DarknetYOLO(thread_image.image_data,
-                        YOLO_DIR=ROOT + "/model/",
+                        YOLO_DIR=ROOT + "/yolov4/",
                           score_thresh=0.1,
                          fps = 0.08)
 thread_yolo.start()

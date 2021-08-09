@@ -37,9 +37,9 @@ class DarknetYOLO(threading.Thread):
         # self.net = Detector(bytes(YOLO_CFG, encoding="utf-8"), bytes(YOLO_WEIGHTS, encoding="utf-8"), 0,
             #    bytes(YOLO_DATA, encoding="utf-8"))
         self.net = Detector(
-                config_path="yolov4/cfg/yolov4.cfg",
+                config_path="yolov4/yolov4.cfg",
                 weights_path="yolov4/yolov4.weights",
-                meta_path="yolov4/cfg/coco.data",
+                meta_path="yolov4/coco.data",
                 lib_darknet_path="yolov4/libdarknet.so",
                 batch_size=1,
                 gpu_id=0
@@ -98,7 +98,8 @@ class DarknetYOLO(threading.Thread):
             make_image_only=False
             )
             
-        #print("*********Result: " + str(results))
+        if results:
+            print("*********Result: " + str(results[0].class_name))
         del dark_frame
         classes = []
         scores = []
@@ -106,12 +107,11 @@ class DarknetYOLO(threading.Thread):
         for r in results:
             classes.append(self.getLabelIndex(r.class_name))
             scores.append(r.class_confidence)
-            bbs.append([
-                r.left_x,
-                r.top_y,
-                r.width,
-                r.height
-                ])
+            X = r.left_x / image_width
+            Y = r.top_y / image_width
+            X_ = (r.left_x + r.width) / image_width
+            Y_ = (r.top_y + r.height) / image_height
+            bbs.append([Y, X, Y_, X_])
         # for class_, score, bounds in results:
         #     x, y, w, h = bounds
 
