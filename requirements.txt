@@ -16,3 +16,4 @@ glob2
 aiohttp
 aiortc
 opencv-python
+Pillow
