@@ -66,7 +66,8 @@ function negotiate() {
 }
 
 function startDataChannels() {
-    // For transmitting data.
+    console.log('*******INTO startDataChannels')
+	// For transmitting data.
     dc = pc.createDataChannel('chat');
     dc.onclose = function() {
         clearInterval(dcInterval);
@@ -84,7 +85,7 @@ function startDataChannels() {
                                          'width':wc_coords[2],
                                         }
                               }));
-        console.log('message received: ' + tempData)
+        console.log('***message received: ' + tempData)
         
     };
 

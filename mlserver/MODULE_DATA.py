@@ -9,17 +9,24 @@ class ModuleData:
             
     def create_detection_data(self):
         h = self.image_height; w = self.image_width;
+        #print("****INTO create detection data*******")
         data = {}
         data['type'] = 'detection_data'
         data['name'] = self.detection_thread.name
-    
+        #print('name: ' + str(data['name']))
         data['bbs'] = self.fix_bb_coords(self.detection_thread.output_data.bbs.copy(),
                                     h,w)
+        #print('bbs: ' + str(data['bbs']))
         data['scores'] = self.detection_thread.output_data.scores.tolist()
+        #print("scores: " + str(data['scores']))
         class_names = []
+        #print("self.detection_thread.output_data.classes: " + str(self.detection_thread.output_data.classes))
+        #print("category_index: " + str(self.detection_thread.output_data.category_index))
         for c in self.detection_thread.output_data.classes:
-            class_names.append(self.detection_thread.output_data.category_index.get(c)['name'])
+            #class_names.append(self.detection_thread.output_data.category_index.get(c)['name'])
+            class_names.append(self.detection_thread.CLASS_NAMES[int(c)-1])
         data['classes'] = class_names
+        #print('classes: ' + str(data['classes']))
 
         return json.dumps(data)
    

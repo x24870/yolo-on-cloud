@@ -12,4 +12,3 @@ setInterval(intervalWebcamFrame, webcamUpdateIntervalMS);
 
 
 
-

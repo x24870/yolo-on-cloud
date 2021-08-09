@@ -8,7 +8,6 @@ import pandas as pd
 from data_structures import OutputClassificationData
 
 
-
 class DarknetYOLO(threading.Thread):
 
     def __init__(self, image_data,
@@ -33,7 +32,7 @@ class DarknetYOLO(threading.Thread):
 
 
         self.image_data = image_data
-        self.net = net = Detector(bytes(YOLO_CFG, encoding="utf-8"), bytes(YOLO_WEIGHTS, encoding="utf-8"), 0,
+        self.net = Detector(bytes(YOLO_CFG, encoding="utf-8"), bytes(YOLO_WEIGHTS, encoding="utf-8"), 0,
                bytes(YOLO_DATA, encoding="utf-8"))
         self.results = []
 
@@ -56,6 +55,8 @@ class DarknetYOLO(threading.Thread):
         self.CLASS_NAMES = [self.__BEGIN_STRING + str(s)
                             for s in pd.read_csv(CLASS_NAMES,header=None,names=['LabelName']).LabelName.tolist()]
 
+        print('typeof CLASS_NAMES: ' + str(type(self.CLASS_NAMES)))
+        print('&&&&&&&&&& CLASSE_NAMES: ' + str(self.CLASS_NAMES))
         # Remove all of the odd characters
         for indx,x in enumerate(self.CLASS_NAMES):
             if "'" in x:
@@ -65,7 +66,8 @@ class DarknetYOLO(threading.Thread):
 
 
     def getLabelIndex(self,class_):
-        class_ = str(class_.decode("utf-8"))
+        #class_ = str(class_.decode("utf-8"))
+        class_ = str(class_)
         # Get the remapped label
         label = class_
 
@@ -79,6 +81,7 @@ class DarknetYOLO(threading.Thread):
         dark_frame = darknetImage(image_np)
         image_height,image_width,_ = image_np.shape
         results = self.net.detect(dark_frame,self.output_data.score_thresh)
+        print("*********Result: " + str(results))
         del dark_frame
         classes = []
         scores = []
@@ -102,7 +105,6 @@ class DarknetYOLO(threading.Thread):
         self.output_data.classes = classes
         self.output_data.bbs = bbs
         self.output_data.image_data.image_np = image_np
-
         time.sleep(self.frames_per_ms)
 
     def predict(self,threadName):

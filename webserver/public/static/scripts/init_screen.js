@@ -4,7 +4,7 @@ function setupScreenSizes(){
         
 
 
-        console.log("Screen WIDTH " + screenWidth + " Screen height " + screenHeight);
+        console.log("Screen width " + screenWidth + " Screen height " + screenHeight);
         canvas.width = 640;
         canvas.height = 480;
    

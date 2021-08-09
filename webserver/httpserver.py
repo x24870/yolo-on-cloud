@@ -25,7 +25,7 @@ context = zmq.Context()
 data_socket_send = context.socket(zmq.PUB)
 data_socket_send.connect('tcp://localhost:5556')
 DEBUG = True;
-port = 8889;
+port = 443;
 
 
 class VideoTransformTrack(VideoStreamTrack):
@@ -192,7 +192,6 @@ def MAIN():
     ssl_ctx.load_cert_chain("ssl/domain.crt",
                            "ssl/domain.key")
     web.run_app(app, port=port,ssl_context=ssl_ctx)
-
 
 
 MAIN()
