@@ -2,11 +2,13 @@ import threading
 import time
 import glob
 import numpy as np
-from pydarknet import Detector
+# from pydarknet import Detector
+from yolov4 import Detector
 from pydarknet import Image as darknetImage
 import pandas as pd
 from data_structures import OutputClassificationData
 
+from yolov4.helpers import DarkNetPredictionResult
 
 class DarknetYOLO(threading.Thread):
 
@@ -32,8 +34,9 @@ class DarknetYOLO(threading.Thread):
 
 
         self.image_data = image_data
-        self.net = Detector(bytes(YOLO_CFG, encoding="utf-8"), bytes(YOLO_WEIGHTS, encoding="utf-8"), 0,
-               bytes(YOLO_DATA, encoding="utf-8"))
+        # self.net = Detector(bytes(YOLO_CFG, encoding="utf-8"), bytes(YOLO_WEIGHTS, encoding="utf-8"), 0,
+            #    bytes(YOLO_DATA, encoding="utf-8"))
+        self.net = Detector(gpu_id=0)
         self.results = []
 
         self.output_data = OutputClassificationData()
@@ -80,23 +83,39 @@ class DarknetYOLO(threading.Thread):
     def predict_once(self, image_np):
         dark_frame = darknetImage(image_np)
         image_height,image_width,_ = image_np.shape
-        results = self.net.detect(dark_frame,self.output_data.score_thresh)
-        print("*********Result: " + str(results))
+        # results = self.net.detect(dark_frame,self.output_data.score_thresh)
+        results = self.net.perform_detect(
+            thresh=0.25,
+            image_path_or_buf=image_np,
+            show_image=False,
+            make_image_only=False
+            )
+            
+        #print("*********Result: " + str(results))
         del dark_frame
         classes = []
         scores = []
         bbs = []
-        for class_, score, bounds in results:
-            x, y, w, h = bounds
+        for r in results:
+            classes.append(self.getLabelIndex(r.class_name))
+            scores.append(r.class_confidence)
+            bbs.append(
+                r.left_x,
+                r.top_y,
+                r.width,
+                r.height
+            )
+        # for class_, score, bounds in results:
+        #     x, y, w, h = bounds
 
-            X = (x - w/2)/image_width
-            Y = (y - h/2)/image_height
-            X_ = (x + w/2)/image_width
-            Y_ = (y + h/2)/image_height
-            bbs.append([Y, X,Y_,X_])
-            scores.append(score)
-            index = self.getLabelIndex(class_)
-            classes.append(index)
+        #     X = (x - w/2)/image_width
+        #     Y = (y - h/2)/image_height
+        #     X_ = (x + w/2)/image_width
+        #     Y_ = (y + h/2)/image_height
+        #     bbs.append([Y, X,Y_,X_])
+        #     scores.append(score)
+        #     index = self.getLabelIndex(class_)
+        #     classes.append(index)
         scores = np.asarray(scores)
         classes = np.asarray(classes)
         bbs = np.asarray(bbs)
