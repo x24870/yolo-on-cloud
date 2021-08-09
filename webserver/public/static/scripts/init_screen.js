@@ -26,9 +26,9 @@ function loadWebcam(){
     wcVideoCanvas.height = wc_y_;
     wcVideoCanvas.width = wc_x_;
 
-    wcSendVideoCanvas.height = videoHeight;
-    wcSendVideoCanvas.width = videoWidth;
-    ctxSendVideo = wcSendVideoCanvas.getContext('2d');
+    //wcSendVideoCanvas.height = videoHeight;
+    //wcSendVideoCanvas.width = videoWidth;
+    //ctxSendVideo = wcSendVideoCanvas.getContext('2d');
     console.log('finished loading');
 
 }
