@@ -2,9 +2,7 @@ import threading
 import time
 import glob
 import numpy as np
-# from pydarknet import Detector
 from yolov4 import Detector
-from pydarknet import Image as darknetImage
 import pandas as pd
 from data_structures import OutputClassificationData
 
@@ -65,8 +63,7 @@ class DarknetYOLO(threading.Thread):
         self.CLASS_NAMES = [self.__BEGIN_STRING + str(s)
                             for s in pd.read_csv(CLASS_NAMES,header=None,names=['LabelName']).LabelName.tolist()]
 
-        print('typeof CLASS_NAMES: ' + str(type(self.CLASS_NAMES)))
-        print('&&&&&&&&&& CLASSE_NAMES: ' + str(self.CLASS_NAMES))
+        print('*** CLASSE_NAMES: ' + str(self.CLASS_NAMES))
         # Remove all of the odd characters
         for indx,x in enumerate(self.CLASS_NAMES):
             if "'" in x:
@@ -88,9 +85,8 @@ class DarknetYOLO(threading.Thread):
 
 
     def predict_once(self, image_np):
-        dark_frame = darknetImage(image_np)
         image_height,image_width,_ = image_np.shape
-        # results = self.net.detect(dark_frame,self.output_data.score_thresh)
+        
         results = self.net.perform_detect(
             thresh=0.25,
             image_path_or_buf=image_np,
@@ -99,8 +95,7 @@ class DarknetYOLO(threading.Thread):
             )
             
         if results:
-            print("*********Result: " + str(results[0].class_name))
-        del dark_frame
+            print("*** Detetion Result: " + str(results[0].class_name))
         classes = []
         scores = []
         bbs = []
@@ -111,18 +106,6 @@ class DarknetYOLO(threading.Thread):
             Y = r.top_y / image_width
             X_ = (r.left_x + r.width) / image_width
             Y_ = (r.top_y + r.height) / image_height
-            bbs.append([Y, X, Y_, X_])
-        # for class_, score, bounds in results:
-        #     x, y, w, h = bounds
-
-        #     X = (x - w/2)/image_width
-        #     Y = (y - h/2)/image_height
-        #     X_ = (x + w/2)/image_width
-        #     Y_ = (y + h/2)/image_height
-        #     bbs.append([Y, X,Y_,X_])
-        #     scores.append(score)
-        #     index = self.getLabelIndex(class_)
-        #     classes.append(index)
         scores = np.asarray(scores)
         classes = np.asarray(classes)
         bbs = np.asarray(bbs)

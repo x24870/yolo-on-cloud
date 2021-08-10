@@ -40,7 +40,7 @@ class ZeroMQImageInput(threading.Thread):
             frame = self.footage_socket.recv_string()
             img = base64.b64decode(frame)
             npimg = np.fromstring(img, dtype=np.uint8)
-            source = cv2.imdecode(npimg, 1)
+            source = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
             self.image_data.image_np = source
 
     def getImage(self):
