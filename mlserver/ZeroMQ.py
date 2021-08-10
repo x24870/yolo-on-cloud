@@ -75,7 +75,7 @@ class ZeroMQDataHandler(threading.Thread):
                 self.moduleData.updateData(data)
                 all_data = self.moduleData.create_detection_data()
                 self.data_socket_send.send_string(all_data)
-                print("ALLLLLLLL_DATA: " + str(all_data))
+                print("*** Sent data: " + str(all_data))
                 #print(data)
             except Exception as e:
                 print("Error occured sending or receiving data on ML client. " + str(e))

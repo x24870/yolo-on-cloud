@@ -94,8 +94,6 @@ class DarknetYOLO(threading.Thread):
             make_image_only=False
             )
             
-        if results:
-            print("*** Detetion Result: " + str(results[0].class_name))
         classes = []
         scores = []
         bbs = []
@@ -106,6 +104,7 @@ class DarknetYOLO(threading.Thread):
             Y = r.top_y / image_width
             X_ = (r.left_x + r.width) / image_width
             Y_ = (r.top_y + r.height) / image_height
+            bbs.append([Y, X, Y_, X_])
         scores = np.asarray(scores)
         classes = np.asarray(classes)
         bbs = np.asarray(bbs)
