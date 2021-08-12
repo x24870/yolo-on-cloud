@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 import glob
@@ -16,12 +17,12 @@ class DarknetYOLO(threading.Thread):
                          fps=0.08):
         print("DIRECTORY: " + YOLO_DIR)
         self.createDataFile(YOLO_DIR)
-        YOLO_DATA =  glob.glob(YOLO_DIR + '*.data')[0]
-        YOLO_CFG =  glob.glob(YOLO_DIR + '*.cfg')[0]
-        YOLO_WEIGHTS =  glob.glob(YOLO_DIR + '*.weights')[0]
+        YOLO_DATA =  glob.glob(os.path.join(YOLO_DIR,'*.data'))[0]
+        YOLO_CFG =  glob.glob(os.path.join(YOLO_DIR, '*.cfg'))[0]
+        YOLO_WEIGHTS =  glob.glob(os.path.join(YOLO_DIR,'*.weights'))[0]
+        DARKNET_PATH = os.path.join(os.path.dirname(YOLO_DIR), 'libdarknet.so')
 
-        CLASS_NAMES =  glob.glob(YOLO_DIR + '*.names')[0]
-
+        CLASS_NAMES =  glob.glob(os.path.join(YOLO_DIR, '*.names'))[0]
         self.createClassNames(YOLO_DIR, CLASS_NAMES)
         ENABLE_BY_DEFAULT = False
         self.done = False
@@ -32,28 +33,30 @@ class DarknetYOLO(threading.Thread):
 
 
         self.image_data = image_data
-        # self.net = Detector(bytes(YOLO_CFG, encoding="utf-8"), bytes(YOLO_WEIGHTS, encoding="utf-8"), 0,
-            #    bytes(YOLO_DATA, encoding="utf-8"))
         self.net = Detector(
-                config_path="yolov4/yolov4.cfg",
-                weights_path="yolov4/yolov4.weights",
-                meta_path="yolov4/coco.data",
-                lib_darknet_path="yolov4/libdarknet.so",
+                config_path=YOLO_CFG,
+                weights_path=YOLO_WEIGHTS,
+                meta_path=YOLO_DATA,
+                lib_darknet_path=DARKNET_PATH,
                 batch_size=1,
                 gpu_id=0
                 )
         self.results = []
-
         self.output_data = OutputClassificationData()
         self.output_data.score_thresh = score_thresh
         self.frames_per_ms = fps;
 
 
     def createDataFile(self, YOLO_DIR):
-        FILE_DATA = YOLO_DIR + YOLO_DIR.split('/')[-2] + '.data'
-        FILE_NAMES = glob.glob(YOLO_DIR + '*.names')[0]
-        NUM_CLASSES = len(pd.read_csv(FILE_NAMES,header=None).index.values)
-        f= open(FILE_DATA,"w+")
+        FILE_DATA = os.path.join(YOLO_DIR,  os.path.basename(YOLO_DIR)+'.data')
+        FILE_NAMES = glob.glob(os.path.join(YOLO_DIR, '*.names'))
+        if not FILE_NAMES: 
+            print("Error: can't find *.names file in '{}'".format(YOLO_DIR))
+            exit()
+        else:
+            FILE_NAMES = FILE_NAMES[0]
+        NUM_CLASSES = len(pd.read_csv(FILE_NAMES, header=None).index.values)
+        f = open(FILE_DATA,"w+")
         f.write('classes= ' + str(NUM_CLASSES) + '\n')
         f.write('names= ' + str(FILE_NAMES) + '\n')
         f.close()
