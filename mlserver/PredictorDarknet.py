@@ -43,7 +43,7 @@ class DarknetYOLO(threading.Thread):
                 )
         self.results = []
         self.output_data = OutputClassificationData()
-        self.output_data.score_thresh = score_thresh
+        self.score_thresh = score_thresh
         self.frames_per_ms = fps;
 
 
@@ -91,7 +91,7 @@ class DarknetYOLO(threading.Thread):
         image_height,image_width,_ = image_np.shape
         
         results = self.net.perform_detect(
-            thresh=0.25,
+            thresh=self.score_thresh,
             image_path_or_buf=image_np,
             show_image=False,
             make_image_only=False
