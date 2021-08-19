@@ -1,3 +1,4 @@
+import json
 import threading
 import base64
 import numpy as np
@@ -38,8 +39,11 @@ class ZeroMQImageInput(threading.Thread):
     def updateImg(self, threadName):
         while not self.done:
             frame = self.footage_socket.recv_string()
-            img = base64.b64decode(frame)
-            npimg = np.fromstring(img, dtype=np.uint8)
+            # img = base64.b64decode(frame)
+            data = base64.b64decode(frame)
+            data = json.loads(data)
+            npimg = np.fromstring(data.buffer, dtype=np.unit8)
+            # npimg = np.fromstring(img, dtype=np.uint8)
             source = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
             self.image_data.image_np = source
 

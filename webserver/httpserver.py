@@ -1,4 +1,4 @@
-import argparse
+import uuid
 import asyncio
 import json
 import logging
@@ -24,17 +24,22 @@ context = zmq.Context()
 
 data_socket_send = context.socket(zmq.PUB)
 data_socket_send.connect('tcp://localhost:5556')
-DEBUG = True;
-port = 443;
+DEBUG = True
+port = 443
 
+class CustomPC(RTCPeerConnection):
+    def __init__(self):
+        super().__init__()
+        self.id = uuid.uuid4()
 
 class VideoTransformTrack(VideoStreamTrack):
-    def __init__(self, track):
+    def __init__(self, track, pc_id):
         super().__init__()
         self.counter = 0
         self.track = track
         self.footage_socket = context.socket(zmq.PUB)
         self.footage_socket.connect('tcp://localhost:5555')
+        self.pc_id = pc_id
 
 
     async def recv(self):
@@ -43,8 +48,12 @@ class VideoTransformTrack(VideoStreamTrack):
             # Send via MQTT
             img = frame.to_ndarray(format='bgr24')
             encoded, buffer = cv2.imencode('.jpg', img)
+            data = json.dumps({
+                'pc_id': self.pc_id,
+                'buffer': buffer
+            })
             # Send Webcam stream from HTTP Server -> ML Server
-            self.footage_socket.send(base64.b64encode(buffer))
+            self.footage_socket.send(base64.b64encode(data))
             return frame
         except Exception as e:
             print("An error occured sending over MQTT: " + str(e))
@@ -100,7 +109,7 @@ async def offer(request):
         sdp=params['sdp'],
         type=params['type'])
 
-    pc = RTCPeerConnection()
+    pc = CustomPC()
     pcs.add(pc)
 
 
@@ -137,7 +146,7 @@ async def offer(request):
 
 
         if track.kind == 'video':
-            local_video = VideoTransformTrack(track)
+            local_video = VideoTransformTrack(track, pc.id)
             pc.addTrack(local_video)
             print("Added local video (cnn).")
 
