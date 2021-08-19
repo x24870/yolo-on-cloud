@@ -24,13 +24,13 @@ context = zmq.Context()
 
 data_socket_send = context.socket(zmq.PUB)
 data_socket_send.connect('tcp://localhost:5556')
-DEBUG = True
+DEBUG = False
 port = 443
 
 class CustomPC(RTCPeerConnection):
     def __init__(self):
         super().__init__()
-        self.id = uuid.uuid4()
+        self.id = str(uuid.uuid4())
 
 class VideoTransformTrack(VideoStreamTrack):
     def __init__(self, track, pc_id):
@@ -47,13 +47,15 @@ class VideoTransformTrack(VideoStreamTrack):
         try:
             # Send via MQTT
             img = frame.to_ndarray(format='bgr24')
-            encoded, buffer = cv2.imencode('.jpg', img)
-            data = json.dumps({
+            encoded, buf = cv2.imencode('.jpg', img)
+            buf = base64.b64encode(buf.tobytes())
+            buf = buf.decode('utf-8')
+            data = {
                 'pc_id': self.pc_id,
-                'buffer': buffer
-            })
+                'buffer': buf
+            }
             # Send Webcam stream from HTTP Server -> ML Server
-            self.footage_socket.send(base64.b64encode(data))
+            self.footage_socket.send_json(data)
             return frame
         except Exception as e:
             print("An error occured sending over MQTT: " + str(e))

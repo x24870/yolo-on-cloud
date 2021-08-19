@@ -3,6 +3,7 @@ import threading
 import time
 import glob
 import numpy as np
+import cv2
 from yolov4 import Detector
 import pandas as pd
 from data_structures import OutputClassificationData
@@ -89,7 +90,7 @@ class DarknetYOLO(threading.Thread):
 
     def predict_once(self, image_np):
         image_height,image_width,_ = image_np.shape
-        
+        #cv2.imwrite('test.jpg', image_np)
         results = self.net.perform_detect(
             thresh=self.score_thresh,
             image_path_or_buf=image_np,
