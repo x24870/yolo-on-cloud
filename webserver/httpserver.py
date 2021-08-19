@@ -1,4 +1,5 @@
 import uuid
+import time
 import asyncio
 import json
 import logging
@@ -50,9 +51,11 @@ class VideoTransformTrack(VideoStreamTrack):
             encoded, buf = cv2.imencode('.jpg', img)
             buf = base64.b64encode(buf.tobytes())
             buf = buf.decode('utf-8')
+            timestamp = int(time.time())
             data = {
                 'pc_id': self.pc_id,
-                'buffer': buf
+                'buf': buf,
+                'ts': timestamp
             }
             # Send Webcam stream from HTTP Server -> ML Server
             self.footage_socket.send_json(data)

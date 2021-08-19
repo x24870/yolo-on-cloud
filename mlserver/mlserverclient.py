@@ -20,7 +20,7 @@ context = zmq.Context()
 thread_image = ZeroMQImageInput(context);
 thread_image.start()
 
-thread_yolo = DarknetYOLO(thread_image.image_data,
+thread_yolo = DarknetYOLO(thread_image.image_for_predict,
                         YOLO_DIR=ROOT + "/yolov4/coco",
                           score_thresh=0.1,
                          fps = 0.08)

@@ -1,32 +1,26 @@
-import json
 import threading
 import base64
 import numpy as np
-import time
-from MODULE_DATA import ModuleData
 import cv2
 import base64
 import zmq
-
-class ImageData:
-    def __init__(self):
-        self.image_np = ()
-        self.isInit = False
-        self.width = None
-        self.height = None
+from MODULE_DATA import ModuleData
+from data_structures import ImageData
 
 class ZeroMQImageInput(threading.Thread):
     def __init__(self, context, IMAGE_WIDTH = 640 ,IMAGE_HEIGHT = 480):
         threading.Thread.__init__(self)
         self.name = "ZeroMQ Image Input Thread"
-        self.image_data = ImageData()
+        # self.image_data = ImageData()
+        self.images_data = {}
+        self.image_for_predict = ()
         self.done = False
         self.IMAGE_WIDTH = IMAGE_WIDTH
         self.IMAGE_HEIGHT = IMAGE_HEIGHT
         self.cap = []  
-        self.image_data.image_np = np.zeros(shape=(IMAGE_HEIGHT,IMAGE_WIDTH,3))
+        # self.image_data.image_np = np.zeros(shape=(IMAGE_HEIGHT,IMAGE_WIDTH,3))
         self.currentTime = 0
-        self.image_data.isInit = True
+        # self.image_data.isInit = True
         self.footage_socket = context.socket(zmq.SUB)
         self.footage_socket.bind('tcp://*:5555')
         self.footage_socket.setsockopt_string(zmq.SUBSCRIBE, str(''))
@@ -39,11 +33,24 @@ class ZeroMQImageInput(threading.Thread):
     def updateImg(self, threadName):
         while not self.done:
             data = self.footage_socket.recv_json()
-            npimg = data['buffer'].encode()
+            pc_id = data['pc_id']
+            timestamp = data['ts']
+            npimg = data['buf'].encode()
             npimg = base64.b64decode(npimg)
             npimg = np.fromstring(npimg, dtype=np.uint8)
             source = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
-            self.image_data.image_np = source
+            # self.image_data.image_np = source
+            if not self.images_data[pc_id]:
+                image_data = ImageData(source, timestamp)
+                self.images_data.setdefault(pc_id, image_data)
+            else:
+                self.images_data[pc_id].image_np = source
+                self.images_data[pc_id].timestamp = timestamp
+
+            # TODO: select most recent image
+            # TODO: delete image if timestamp too old
+            self.image_for_predict = self.images_data[pc_id].image_np
+
 
     def getImage(self):
         return self.image_data.image_np

@@ -45,7 +45,7 @@ class DarknetYOLO(threading.Thread):
         self.results = []
         self.output_data = OutputClassificationData()
         self.score_thresh = score_thresh
-        self.frames_per_ms = fps;
+        self.frames_per_ms = fps
 
 
     def createDataFile(self, YOLO_DIR):
@@ -141,7 +141,6 @@ class DarknetYOLO(threading.Thread):
         '''
         Returns the image that we will use for prediction.
         '''
-        self.output_data.image_data.original_image_np = self.image_data.image_np
         self.output_data.image_data.image_np = self.image_data.image_np
 
         return self.output_data.image_data.image_np
