@@ -14,6 +14,7 @@ class ModuleData:
         data['type'] = 'detection_data'
         data['name'] = self.detection_thread.name
         #print('name: ' + str(data['name']))
+        data['pc_id'] = self.detection_thread.output_data.image_data.pc_id
         data['bbs'] = self.fix_bb_coords(self.detection_thread.output_data.bbs.copy(),
                                     h,w)
         #print('bbs: ' + str(data['bbs']))

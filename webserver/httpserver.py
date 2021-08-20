@@ -130,7 +130,9 @@ async def offer(request):
                 data_socket_send.send_string(message)
                 if DEBUG:
                     print("Message to browser: " + str(detectionData.data))
-                channel.send(detectionData.data)
+                data = json.loads(detectionData.data)
+                if data['pc_id'] == pc.id:
+                    channel.send(detectionData.data)
             except:
                 print("Failed receiving module data.")
                 channel.send("{}")

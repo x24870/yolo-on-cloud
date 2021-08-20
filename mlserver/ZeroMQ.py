@@ -13,7 +13,7 @@ class ZeroMQImageInput(threading.Thread):
         self.name = "ZeroMQ Image Input Thread"
         # self.image_data = ImageData()
         self.images_data = {}
-        self.image_for_predict = ImageData((), 0)
+        self.image_for_predict = ImageData('', (), 0)
         self.image_for_predict.image_np = np.zeros(shape=(IMAGE_HEIGHT,IMAGE_WIDTH,3))
         self.done = False
         self.IMAGE_WIDTH = IMAGE_WIDTH
@@ -40,7 +40,7 @@ class ZeroMQImageInput(threading.Thread):
             npimg = np.fromstring(npimg, dtype=np.uint8)
             source = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
             if not self.images_data.get(pc_id):
-                image_data = ImageData(source, timestamp)
+                image_data = ImageData(pc_id, source, timestamp)
                 self.images_data.setdefault(pc_id, image_data)
             else:
                 self.images_data[pc_id].image_np = source
@@ -48,6 +48,7 @@ class ZeroMQImageInput(threading.Thread):
 
             # TODO: select most recent image
             # TODO: delete image if timestamp too old
+            self.image_for_predict.pc_id = self.images_data[pc_id].pc_id
             self.image_for_predict.image_np = self.images_data[pc_id].image_np
             self.image_for_predict.timestampe = self.images_data[pc_id].timestamp
             #cv2.imwrite('update.jpg', self.image_for_predict.image_np)

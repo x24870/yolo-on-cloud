@@ -141,6 +141,7 @@ class DarknetYOLO(threading.Thread):
         '''
         Returns the image that we will use for prediction.
         '''
+        self.output_data.image_data.pc_id = self.image_data.pc_id
         self.output_data.image_data.image_np = self.image_data.image_np
 
         return self.output_data.image_data.image_np

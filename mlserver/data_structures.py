@@ -1,6 +1,7 @@
 import numpy as np
 class ImageData:
-    def __init__(self, image_np, timestamp):
+    def __init__(self, pc_id, image_np, timestamp):
+        self.pc_id = pc_id
         self.image_np = image_np
         self.timestamp = timestamp
         self.isInit = False
