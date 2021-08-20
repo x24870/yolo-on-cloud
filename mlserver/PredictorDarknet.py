@@ -90,7 +90,7 @@ class DarknetYOLO(threading.Thread):
 
     def predict_once(self, image_np):
         image_height,image_width,_ = image_np.shape
-        #cv2.imwrite('test.jpg', image_np)
+        #cv2.imwrite('predict.jpg', image_np)
         results = self.net.perform_detect(
             thresh=self.score_thresh,
             image_path_or_buf=image_np,
