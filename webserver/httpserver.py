@@ -131,8 +131,11 @@ async def offer(request):
                 if DEBUG:
                     print("Message to browser: " + str(detectionData.data))
                 data = json.loads(detectionData.data)
-                if data['pc_id'] == pc.id:
+                if data.get('pc_id') == pc.id:
+                    print("Message to browser: " + str(detectionData.data))
                     channel.send(detectionData.data)
+                else:
+                    channel.send("")
             except:
                 print("Failed receiving module data.")
                 channel.send("{}")
