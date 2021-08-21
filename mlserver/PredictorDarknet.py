@@ -121,12 +121,15 @@ class DarknetYOLO(threading.Thread):
 
     def predict(self,threadName):
         while not self.done:
+            self.image_data.locked = True
             image_np = self.getImage()
             if not self.pause:
                 self.predict_once(image_np)
             else:
                 self.output_data.bbs = np.asarray([])
                 time.sleep(2.0) # Sleep for 2 seconds
+            self.image_data.locked = False
+
     def run(self):
         print("Starting " + self.name)
         self.predict(self.name)

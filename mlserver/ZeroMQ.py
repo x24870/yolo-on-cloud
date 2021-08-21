@@ -20,7 +20,6 @@ class ZeroMQImageInput(threading.Thread):
         self.IMAGE_HEIGHT = IMAGE_HEIGHT
         self.cap = []  
         self.currentTime = 0
-        # self.image_data.isInit = True
         self.footage_socket = context.socket(zmq.SUB)
         self.footage_socket.bind('tcp://*:5555')
         self.footage_socket.setsockopt_string(zmq.SUBSCRIBE, str(''))
@@ -48,9 +47,10 @@ class ZeroMQImageInput(threading.Thread):
 
             # TODO: select most recent image
             # TODO: delete image if timestamp too old
-            self.image_for_predict.pc_id = self.images_data[pc_id].pc_id
-            self.image_for_predict.image_np = self.images_data[pc_id].image_np
-            self.image_for_predict.timestampe = self.images_data[pc_id].timestamp
+            if not self.image_for_predict.locked:
+                self.image_for_predict.pc_id = self.images_data[pc_id].pc_id
+                self.image_for_predict.image_np = self.images_data[pc_id].image_np
+                self.image_for_predict.timestampe = self.images_data[pc_id].timestamp
             #cv2.imwrite('update.jpg', self.image_for_predict.image_np)
 
     def getImage(self):
