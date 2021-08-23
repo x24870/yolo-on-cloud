@@ -67,7 +67,7 @@ class DarknetYOLO(threading.Thread):
         self.CLASS_NAMES = [self.__BEGIN_STRING + str(s)
                             for s in pd.read_csv(CLASS_NAMES,header=None,names=['LabelName']).LabelName.tolist()]
 
-        print('*** CLASSE_NAMES: ' + str(self.CLASS_NAMES))
+        #print('*** CLASSE_NAMES: ' + str(self.CLASS_NAMES))
         # Remove all of the odd characters
         for indx,x in enumerate(self.CLASS_NAMES):
             if "'" in x:
@@ -121,14 +121,13 @@ class DarknetYOLO(threading.Thread):
 
     def predict(self,threadName):
         while not self.done:
-            self.image_data.locked = True
             image_np = self.getImage()
             if not self.pause:
                 self.predict_once(image_np)
             else:
                 self.output_data.bbs = np.asarray([])
                 time.sleep(2.0) # Sleep for 2 seconds
-            self.image_data.locked = False
+            self.image_data.can_update = True
 
     def run(self):
         print("Starting " + self.name)

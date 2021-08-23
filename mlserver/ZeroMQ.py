@@ -47,10 +47,11 @@ class ZeroMQImageInput(threading.Thread):
 
             # TODO: select most recent image
             # TODO: delete image if timestamp too old
-            if not self.image_for_predict.locked:
-                self.image_for_predict.pc_id = self.images_data[pc_id].pc_id
-                self.image_for_predict.image_np = self.images_data[pc_id].image_np
-                self.image_for_predict.timestampe = self.images_data[pc_id].timestamp
+            if self.image_for_predict.can_update:
+                self.image_for_predict.pc_id = pc_id
+                self.image_for_predict.image_np = self.images_data[pc_id].image_np.copy()
+                self.image_for_predict.timestampe = timestamp
+                self.image_for_predict.locked = False
             #cv2.imwrite('update.jpg', self.image_for_predict.image_np)
 
     def getImage(self):
@@ -85,7 +86,7 @@ class ZeroMQDataHandler(threading.Thread):
                 self.moduleData.updateData(data)
                 all_data = self.moduleData.create_detection_data()
                 self.data_socket_send.send_string(all_data)
-                print("*** Sent data: " + str(all_data))
+                #print("*** Sent data: " + str(all_data))
                 #print(data)
             except Exception as e:
                 print("Error occured sending or receiving data on ML client. " + str(e))
