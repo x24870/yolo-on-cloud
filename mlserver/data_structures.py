@@ -14,6 +14,6 @@ class OutputClassificationData:
         self.score_thresh = ()
         self.scores = np.asarray([])
         self.classes = np.asarray([])
-        self.image_data = ImageData('', (), 0)
+        # self.image_data = ImageData('', (), 0)
         #self.category_index = ()
         self.category_index = {}

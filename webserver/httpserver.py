@@ -72,7 +72,7 @@ class DetectionDataHolder(threading.Thread):
         threading.Thread.__init__(self)
         self.name = 'ZeroMQ DataHandler'
         self.done = False
-        self.data = "{}"
+        self.detection_datas = {}
         self.data_socket_rcv = context.socket(zmq.SUB)
         self.data_socket_rcv.bind('tcp://*:5557')
         self.data_socket_rcv.setsockopt_string(zmq.SUBSCRIBE, str(''))
@@ -86,7 +86,8 @@ class DetectionDataHolder(threading.Thread):
     def update(self, threadName):
         while not self.done:
             try:
-                self.data = self.data_socket_rcv.recv_string()
+                data = self.data_socket_rcv.recv_json()
+                self.detection_datas[data['pc_id']] = data
             except:
                 print("Error occured receiving data on ML client")
 
@@ -127,15 +128,14 @@ async def offer(request):
         def on_message(message):
             try:
                 # Send data to ML Server. Currently only sends image height and width.
-                data_socket_send.send_string(message)
+                # data_socket_send.send_string(message)
+                message = json.loads(message)
+                message['pc_id'] = pc.id
+                data_socket_send.send_json(message)
                 if DEBUG:
-                    print("Message to browser: " + str(detectionData.data))
-                data = json.loads(detectionData.data)
-                if data.get('pc_id') == pc.id:
-                    print("Message to browser: " + str(detectionData.data))
-                    channel.send(detectionData.data)
-                else:
-                    channel.send("")
+                    print("Message to browser: " + str(detectionData.detection_datas[pc.id]))
+                data = json.dumps(detectionData.detection_datas[pc.id])
+                channel.send(data)
             except:
                 print("Failed receiving module data.")
                 channel.send("{}")

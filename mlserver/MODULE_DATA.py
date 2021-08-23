@@ -3,33 +3,33 @@ import numpy as np
 class ModuleData:
     def __init__(self,detection_thread):
         self.detection_thread = detection_thread
-        self.image_height = 0;
-        self.image_width = 0;
+        self.pc_id = ''
+        self.image_height = 0
+        self.image_width = 0
 
             
-    def create_detection_data(self):
-        h = self.image_height; w = self.image_width;
-        #print("****INTO create detection data*******")
+    def create_detection_data(self, pc_id):
+        h, w = self.image_height, self.image_width
         data = {}
         data['type'] = 'detection_data'
         data['name'] = self.detection_thread.name
         #print('name: ' + str(data['name']))
-        data['pc_id'] = self.detection_thread.output_data.image_data.pc_id
-        data['bbs'] = self.fix_bb_coords(self.detection_thread.output_data.bbs.copy(),
+        # data['pc_id'] = self.detection_thread.output_data.image_data.pc_id
+        data['bbs'] = self.fix_bb_coords(self.detection_thread.output_datas[pc_id].bbs.copy(),
                                     h,w)
         #print('bbs: ' + str(data['bbs']))
-        data['scores'] = self.detection_thread.output_data.scores.tolist()
+        data['scores'] = self.detection_thread.output_datas[pc_id].scores.tolist()
         #print("scores: " + str(data['scores']))
         class_names = []
         #print("self.detection_thread.output_data.classes: " + str(self.detection_thread.output_data.classes))
         #print("category_index: " + str(self.detection_thread.output_data.category_index))
-        for c in self.detection_thread.output_data.classes:
+        for c in self.detection_thread.output_datas[pc_id].classes:
             #class_names.append(self.detection_thread.output_data.category_index.get(c)['name'])
             class_names.append(self.detection_thread.CLASS_NAMES[int(c)-1])
         data['classes'] = class_names
         #print('classes: ' + str(data['classes']))
 
-        return json.dumps(data)
+        return data
    
 
 
@@ -46,10 +46,10 @@ class ModuleData:
             bbs[indx][3] = max(min(bbs[indx][3],w),0)
         return bbs.tolist()
     
-    def updateData(self,message):
-        data = json.loads(message)
+    def updateData(self, message):
+        # data = json.loads(message)
         try:
-            self.image_height = int(data['image_properties']['height'])
-            self.image_width = int(data['image_properties']['width'])
+            self.image_height = int(message['image_properties']['height'])
+            self.image_width = int(message['image_properties']['width'])
         except Exception as e:
             print("Failed loading new data." + str(e))

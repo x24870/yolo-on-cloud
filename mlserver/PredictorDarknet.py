@@ -1,3 +1,4 @@
+from mlserver.data_structures import ImageData
 import os
 import threading
 import time
@@ -43,7 +44,8 @@ class DarknetYOLO(threading.Thread):
                 gpu_id=0
                 )
         self.results = []
-        self.output_data = OutputClassificationData()
+        # self.output_data = OutputClassificationData()
+        self.output_datas = {}
         self.score_thresh = score_thresh
         self.frames_per_ms = fps
 
@@ -88,7 +90,7 @@ class DarknetYOLO(threading.Thread):
 
 
 
-    def predict_once(self, image_np):
+    def predict_once(self, pc_id, image_np):
         image_height,image_width,_ = image_np.shape
         #cv2.imwrite('predict.jpg', image_np)
         results = self.net.perform_detect(
@@ -113,17 +115,23 @@ class DarknetYOLO(threading.Thread):
         classes = np.asarray(classes)
         bbs = np.asarray(bbs)
 
-        self.output_data.scores = scores
-        self.output_data.classes = classes
-        self.output_data.bbs = bbs
-        self.output_data.image_data.image_np = image_np
+        if not self.output_datas.get(pc_id):
+            self.output_datas.setdefault(pc_id, OutputClassificationData)
+            #TODO: delete output_data if the timestamp of the id too old
+        self.output_datas[pc_id].scores = scores
+        self.output_datas[pc_id].classes = classes
+        self.output_datas[pc_id].bbs = bbs
+        # self.output_data.scores = scores
+        # self.output_data.classes = classes
+        # self.output_data.bbs = bbs
+        # self.output_data.image_data.image_np = image_np
         time.sleep(self.frames_per_ms)
 
     def predict(self,threadName):
         while not self.done:
-            image_np = self.getImage()
+            pc_id, image_np = self.getImage()
             if not self.pause:
-                self.predict_once(image_np)
+                self.predict_once(pc_id, image_np)
             else:
                 self.output_data.bbs = np.asarray([])
                 time.sleep(2.0) # Sleep for 2 seconds
@@ -143,7 +151,7 @@ class DarknetYOLO(threading.Thread):
         '''
         Returns the image that we will use for prediction.
         '''
-        self.output_data.image_data.pc_id = self.image_data.pc_id
-        self.output_data.image_data.image_np = self.image_data.image_np
+        #self.output_data.image_data.pc_id = self.image_data.pc_id
+        # self.output_data.image_data.image_np = self.image_data.image_np
 
-        return self.output_data.image_data.image_np
+        return (self.image_data.pc_id, self.image_data.image_np)

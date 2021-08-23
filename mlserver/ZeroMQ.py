@@ -82,12 +82,12 @@ class ZeroMQDataHandler(threading.Thread):
     def update(self, threadName):
         while not self.done:
             try:
-                data = self.data_socket_rcv.recv_string()
-                self.moduleData.updateData(data)
-                all_data = self.moduleData.create_detection_data()
-                self.data_socket_send.send_string(all_data)
+                # data = self.data_socket_rcv.recv_string()
+                message = self.data_socket_rcv.recv_json()
+                self.moduleData.updateData(message)
+                all_data = self.moduleData.create_detection_data(message['pc_id'])
+                self.data_socket_send.send_json(all_data)
                 #print("*** Sent data: " + str(all_data))
-                #print(data)
             except Exception as e:
                 print("Error occured sending or receiving data on ML client. " + str(e))
 
