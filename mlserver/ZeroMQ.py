@@ -51,7 +51,7 @@ class ZeroMQImageInput(threading.Thread):
                 self.image_for_predict.pc_id = pc_id
                 self.image_for_predict.image_np = self.images_data[pc_id].image_np.copy()
                 self.image_for_predict.timestampe = timestamp
-                self.image_for_predict.locked = False
+                self.image_for_predict.can_update = False
             #cv2.imwrite('update.jpg', self.image_for_predict.image_np)
 
     def getImage(self):

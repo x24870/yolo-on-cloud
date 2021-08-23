@@ -14,19 +14,20 @@ class ModuleData:
         data['type'] = 'detection_data'
         data['name'] = self.detection_thread.name
         #print('name: ' + str(data['name']))
-        # data['pc_id'] = self.detection_thread.output_data.image_data.pc_id
-        data['bbs'] = self.fix_bb_coords(self.detection_thread.output_datas[pc_id].bbs.copy(),
+        if self.detection_thread.output_datas.get(pc_id):
+            data['pc_id'] = self.detection_thread.output_datas[pc_id].pc_id
+            data['bbs'] = self.fix_bb_coords(self.detection_thread.output_datas[pc_id].bbs.copy(),
                                     h,w)
         #print('bbs: ' + str(data['bbs']))
-        data['scores'] = self.detection_thread.output_datas[pc_id].scores.tolist()
+            data['scores'] = self.detection_thread.output_datas[pc_id].scores.tolist()
         #print("scores: " + str(data['scores']))
-        class_names = []
+            class_names = []
         #print("self.detection_thread.output_data.classes: " + str(self.detection_thread.output_data.classes))
         #print("category_index: " + str(self.detection_thread.output_data.category_index))
-        for c in self.detection_thread.output_datas[pc_id].classes:
+            for c in self.detection_thread.output_datas[pc_id].classes:
             #class_names.append(self.detection_thread.output_data.category_index.get(c)['name'])
-            class_names.append(self.detection_thread.CLASS_NAMES[int(c)-1])
-        data['classes'] = class_names
+                class_names.append(self.detection_thread.CLASS_NAMES[int(c)-1])
+            data['classes'] = class_names
         #print('classes: ' + str(data['classes']))
 
         return data

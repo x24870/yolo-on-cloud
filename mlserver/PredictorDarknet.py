@@ -1,4 +1,3 @@
-from mlserver.data_structures import ImageData
 import os
 import threading
 import time
@@ -116,8 +115,9 @@ class DarknetYOLO(threading.Thread):
         bbs = np.asarray(bbs)
 
         if not self.output_datas.get(pc_id):
-            self.output_datas.setdefault(pc_id, OutputClassificationData)
+            self.output_datas.setdefault(pc_id, OutputClassificationData())
             #TODO: delete output_data if the timestamp of the id too old
+        self.output_datas[pc_id].pc_id = pc_id
         self.output_datas[pc_id].scores = scores
         self.output_datas[pc_id].classes = classes
         self.output_datas[pc_id].bbs = bbs
