@@ -8,15 +8,16 @@ from MODULE_DATA import ModuleData
 from data_structures import ImageData
 
 class ZeroMQImageInput(threading.Thread):
-    def __init__(self, context, IMAGE_WIDTH = 640 ,IMAGE_HEIGHT = 480):
+    def __init__(self, context, image_lock):
         threading.Thread.__init__(self)
         self.name = "ZeroMQ Image Input Thread"
         self.images_data = {}
         self.image_for_predict = ImageData('', (), 0)
         self.image_for_predict.image_np = np.zeros(shape=(IMAGE_HEIGHT,IMAGE_WIDTH,3))
         self.done = False
-        self.IMAGE_WIDTH = IMAGE_WIDTH
-        self.IMAGE_HEIGHT = IMAGE_HEIGHT
+        self.image_lock = image_lock
+
+        # init image message queue receiver
         self.footage_socket = context.socket(zmq.SUB)
         self.footage_socket.bind('tcp://*:5555')
         self.footage_socket.setsockopt_string(zmq.SUBSCRIBE, str(''))
@@ -29,9 +30,17 @@ class ZeroMQImageInput(threading.Thread):
     def updateImg(self):
         while not self.done:
             data = self.footage_socket.recv_json()
-            pc_id = data['pc_id']
-            timestamp = data['ts']
-            npimg = data['buf'].encode()
+
+            # received data must contains pc_id, timestamp and image buffer
+            try:
+                pc_id = data['pc_id']
+                timestamp = data['ts']
+                npimg = data['buf'].encode()
+            except:
+                print('{} received invalid data.'.format(self.name))
+                continue
+
+            # convert image buffer to image format
             npimg = base64.b64decode(npimg)
             npimg = np.fromstring(npimg, dtype=np.uint8)
             source = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
@@ -42,17 +51,15 @@ class ZeroMQImageInput(threading.Thread):
                 self.images_data[pc_id].image_np = source
                 self.images_data[pc_id].timestamp = timestamp
 
+            # update image for prediction
             # TODO: select most recent image
             # TODO: delete image if timestamp too old
-            if self.image_for_predict.can_update:
-                self.image_for_predict.pc_id = pc_id
-                self.image_for_predict.image_np = self.images_data[pc_id].image_np.copy()
-                self.image_for_predict.timestampe = timestamp
-                self.image_for_predict.can_update = False
+            self.image_lock.acquire()
+            self.image_for_predict.pc_id = pc_id
+            self.image_for_predict.image_np = self.images_data[pc_id].image_np.copy()
+            self.image_for_predict.timestamp = timestamp
+            self.image_lock.release()
             #cv2.imwrite('update.jpg', self.image_for_predict.image_np)
-
-    def getImage(self):
-        return self.image_data.image_np
 
     def stop(self):
         self.done = True

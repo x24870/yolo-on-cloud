@@ -4,7 +4,6 @@ class ImageData:
         self.pc_id = pc_id
         self.image_np = image_np
         self.timestamp = timestamp
-        self.can_update = True
         self.width = None
         self.height = None
         

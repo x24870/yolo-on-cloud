@@ -3,7 +3,6 @@ import threading
 import time
 import glob
 import numpy as np
-import cv2
 from yolov4 import Detector
 import pandas as pd
 from data_structures import OutputClassificationData
@@ -11,27 +10,29 @@ from data_structures import OutputClassificationData
 from yolov4.helpers import DarkNetPredictionResult
 
 class DarknetYOLO(threading.Thread):
-
-    def __init__(self, image_data,
-                         YOLO_DIR,
-                         score_thresh=0.5,
-                         fps=0.08):
+    def __init__(self, image_data, image_lock, YOLO_DIR, score_thresh, fps):
+        # init YOLO required files
         print("YOLO Directory: " + YOLO_DIR)
         self.createDataFile(YOLO_DIR)
         YOLO_DATA =  glob.glob(os.path.join(YOLO_DIR,'*.data'))[0]
         YOLO_CFG =  glob.glob(os.path.join(YOLO_DIR, '*.cfg'))[0]
         YOLO_WEIGHTS =  glob.glob(os.path.join(YOLO_DIR,'*.weights'))[0]
         DARKNET_PATH = os.path.join(os.path.dirname(YOLO_DIR), 'libdarknet.so')
-
         CLASS_NAMES =  glob.glob(os.path.join(YOLO_DIR, '*.names'))[0]
         self.createClassNames(CLASS_NAMES)
-        self.done = False
+
+        # init instance variables
         threading.Thread.__init__(self)
-
-        self.pause = False
         self.name = "YOLO Predictor Thread"
-
+        self.image_lock = image_lock
         self.image_data = image_data
+        self.done = False
+        self.pause = False
+        self.output_datas = {}
+        self.score_thresh = score_thresh
+        self.frames_per_ms = fps
+
+        # init detector
         self.net = Detector(
                 config_path=YOLO_CFG,
                 weights_path=YOLO_WEIGHTS,
@@ -40,10 +41,6 @@ class DarknetYOLO(threading.Thread):
                 batch_size=1,
                 gpu_id=0
                 )
-
-        self.output_datas = {}
-        self.score_thresh = score_thresh
-        self.frames_per_ms = fps
 
 
     def createDataFile(self, YOLO_DIR):
@@ -114,13 +111,14 @@ class DarknetYOLO(threading.Thread):
 
     def predict(self):
         while not self.done:
+            self.image_lock.acquire()
             pc_id, image_np = self.getImage()
             if not self.pause:
                 self.predict_once(pc_id, image_np)
             else:
                 self.output_data.bbs = np.asarray([])
                 time.sleep(2.0) # Sleep for 2 seconds
-            self.image_data.can_update = True
+            self.image_lock.release()
 
     def run(self):
         print("Starting " + self.name)

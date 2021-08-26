@@ -1,5 +1,3 @@
-import json
-import numpy as np
 class ModuleData:
     def __init__(self,detection_thread):
         self.detection_thread = detection_thread
