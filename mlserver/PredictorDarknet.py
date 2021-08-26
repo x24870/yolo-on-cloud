@@ -16,7 +16,7 @@ class DarknetYOLO(threading.Thread):
                          YOLO_DIR,
                          score_thresh=0.5,
                          fps=0.08):
-        print("DIRECTORY: " + YOLO_DIR)
+        print("YOLO Directory: " + YOLO_DIR)
         self.createDataFile(YOLO_DIR)
         YOLO_DATA =  glob.glob(os.path.join(YOLO_DIR,'*.data'))[0]
         YOLO_CFG =  glob.glob(os.path.join(YOLO_DIR, '*.cfg'))[0]
@@ -24,14 +24,12 @@ class DarknetYOLO(threading.Thread):
         DARKNET_PATH = os.path.join(os.path.dirname(YOLO_DIR), 'libdarknet.so')
 
         CLASS_NAMES =  glob.glob(os.path.join(YOLO_DIR, '*.names'))[0]
-        self.createClassNames(YOLO_DIR, CLASS_NAMES)
-        ENABLE_BY_DEFAULT = False
+        self.createClassNames(CLASS_NAMES)
         self.done = False
         threading.Thread.__init__(self)
 
         self.pause = False
         self.name = "YOLO Predictor Thread"
-
 
         self.image_data = image_data
         self.net = Detector(
@@ -42,8 +40,7 @@ class DarknetYOLO(threading.Thread):
                 batch_size=1,
                 gpu_id=0
                 )
-        self.results = []
-        # self.output_data = OutputClassificationData()
+
         self.output_datas = {}
         self.score_thresh = score_thresh
         self.frames_per_ms = fps
@@ -63,31 +60,23 @@ class DarknetYOLO(threading.Thread):
         f.write('names= ' + str(FILE_NAMES) + '\n')
         f.close()
 
-    def createClassNames(self,YOLO_DIR, CLASS_NAMES):
+    def createClassNames(self, CLASS_NAMES):
         self.__BEGIN_STRING = ''
         self.CLASS_NAMES = [self.__BEGIN_STRING + str(s)
                             for s in pd.read_csv(CLASS_NAMES,header=None,names=['LabelName']).LabelName.tolist()]
 
-        #print('*** CLASSE_NAMES: ' + str(self.CLASS_NAMES))
+        #print('CLASSE_NAMES: ' + str(self.CLASS_NAMES))
         # Remove all of the odd characters
         for indx,x in enumerate(self.CLASS_NAMES):
             if "'" in x:
                 self.CLASS_NAMES[indx] = x.replace("'","")
 
-
-
-
     def getLabelIndex(self,class_):
         #class_ = str(class_.decode("utf-8"))
         class_ = str(class_)
-        # Get the remapped label
-        label = class_
 
         indx = self.CLASS_NAMES.index(class_) + 1
         return indx
-
-
-
 
     def predict_once(self, pc_id, image_np):
         image_height,image_width,_ = image_np.shape
@@ -121,13 +110,9 @@ class DarknetYOLO(threading.Thread):
         self.output_datas[pc_id].scores = scores
         self.output_datas[pc_id].classes = classes
         self.output_datas[pc_id].bbs = bbs
-        # self.output_data.scores = scores
-        # self.output_data.classes = classes
-        # self.output_data.bbs = bbs
-        # self.output_data.image_data.image_np = image_np
         time.sleep(self.frames_per_ms)
 
-    def predict(self,threadName):
+    def predict(self):
         while not self.done:
             pc_id, image_np = self.getImage()
             if not self.pause:
@@ -139,19 +124,20 @@ class DarknetYOLO(threading.Thread):
 
     def run(self):
         print("Starting " + self.name)
-        self.predict(self.name)
+        self.predict()
         print("Exiting " + self.name)
+
     def pause_predictor(self):
         self.pause = True
+
     def continue_predictor(self):
         self.pause = False
+
     def stop(self):
         self.done = True
+
     def getImage(self):
         '''
         Returns the image that we will use for prediction.
         '''
-        #self.output_data.image_data.pc_id = self.image_data.pc_id
-        # self.output_data.image_data.image_np = self.image_data.image_np
-
         return (self.image_data.pc_id, self.image_data.image_np)

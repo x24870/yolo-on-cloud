@@ -12,9 +12,6 @@ class OutputClassificationData:
     def __init__(self):
         self.pc_id = ''
         self.bbs = np.asarray([])
-        self.score_thresh = ()
         self.scores = np.asarray([])
         self.classes = np.asarray([])
-        # self.image_data = ImageData('', (), 0)
-        #self.category_index = ()
         self.category_index = {}

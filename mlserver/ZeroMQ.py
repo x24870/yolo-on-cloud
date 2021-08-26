@@ -11,25 +11,22 @@ class ZeroMQImageInput(threading.Thread):
     def __init__(self, context, IMAGE_WIDTH = 640 ,IMAGE_HEIGHT = 480):
         threading.Thread.__init__(self)
         self.name = "ZeroMQ Image Input Thread"
-        # self.image_data = ImageData()
         self.images_data = {}
         self.image_for_predict = ImageData('', (), 0)
         self.image_for_predict.image_np = np.zeros(shape=(IMAGE_HEIGHT,IMAGE_WIDTH,3))
         self.done = False
         self.IMAGE_WIDTH = IMAGE_WIDTH
         self.IMAGE_HEIGHT = IMAGE_HEIGHT
-        self.cap = []  
-        self.currentTime = 0
         self.footage_socket = context.socket(zmq.SUB)
         self.footage_socket.bind('tcp://*:5555')
         self.footage_socket.setsockopt_string(zmq.SUBSCRIBE, str(''))
 
     def run(self):
         print("Starting " + self.name)
-        self.updateImg(self.name)
+        self.updateImg()
         print("Exiting " + self.name)
 
-    def updateImg(self, threadName):
+    def updateImg(self):
         while not self.done:
             data = self.footage_socket.recv_json()
             pc_id = data['pc_id']
@@ -72,17 +69,14 @@ class ZeroMQDataHandler(threading.Thread):
         self.data_socket_rcv.bind('tcp://*:5556')
         self.data_socket_rcv.setsockopt_string(zmq.SUBSCRIBE, str(''))
 
-
-
     def run(self):
         print("Starting " + self.name)
-        self.update(self.name)
+        self.update()
         print("Exiting " + self.name)
 
-    def update(self, threadName):
+    def update(self):
         while not self.done:
             try:
-                # data = self.data_socket_rcv.recv_string()
                 message = self.data_socket_rcv.recv_json()
                 self.moduleData.updateData(message)
                 all_data = self.moduleData.create_detection_data(message['pc_id'])
