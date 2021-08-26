@@ -15,13 +15,13 @@ ROOT = os.path.dirname(os.path.realpath(__file__))
 context = zmq.Context()
 image_lock = threading.Lock()
 
-thread_image = ZeroMQImageInput(context);
+thread_image = ZeroMQImageInput(context, image_lock)
 thread_image.start()
 
 thread_yolo = DarknetYOLO(thread_image.image_for_predict,
-                        YOLO_DIR=ROOT + "/yolov4/coco",
-                        score_thresh=0.1,
-                        fps = 0.08)
+                            image_lock,
+                            YOLO_DIR=ROOT + "/yolov4/coco",
+                            score_thresh=0.1,fps = 0.08)
 thread_yolo.start()
 
 thread_zeromqdatahandler = ZeroMQDataHandler(context,thread_yolo)
