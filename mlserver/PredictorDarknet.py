@@ -30,7 +30,7 @@ class DarknetYOLO(threading.Thread):
         self.pause = False
         self.output_datas = {}
         self.score_thresh = score_thresh
-        self.frames_per_ms = fps
+        self.fps = fps
 
         # init detector
         self.net = Detector(
@@ -107,18 +107,18 @@ class DarknetYOLO(threading.Thread):
         self.output_datas[pc_id].scores = scores
         self.output_datas[pc_id].classes = classes
         self.output_datas[pc_id].bbs = bbs
-        time.sleep(self.frames_per_ms)
 
     def predict(self):
         while not self.done:
-            self.image_lock.acquire()
-            pc_id, image_np = self.getImage()
             if not self.pause:
+                self.image_lock.acquire()
+                pc_id, image_np = self.getImage()
                 self.predict_once(pc_id, image_np)
+                self.image_lock.release()
+                time.sleep(self.fps)
             else:
                 self.output_data.bbs = np.asarray([])
                 time.sleep(2.0) # Sleep for 2 seconds
-            self.image_lock.release()
 
     def run(self):
         print("Starting " + self.name)
