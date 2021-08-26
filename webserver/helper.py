@@ -22,26 +22,21 @@ def strings(w, h):
     replace_res(
         './public/index.html',
         '        <video id="live"',
-        f'        <video id="live" width="{w}" height="{h}" autoplay></video>'
+        f'        <video id="live" width="{w}" height="{h}" autoplay></video>\n'
         )
 
     replace_res(
         './public/static/scripts/constants.js',
         'var resolutions = [[',
-        f'var resolutions = [[{w},{h}],[1280,720]],'
+        f'var resolutions = [[{w},{h}],[1280,720]],\n'
         )
 
     replace_res(
         './public/static/scripts/init_screen.js',
         '        canvas.width =',
-        f'        canvas.width = {w};'
+        f'        canvas.width = {w}; canvas.height = {h};\n'
         )
 
-    replace_res(
-        './public/static/scripts/init_screen.js',
-        '        canvas.height =',
-        f'        canvas.height = {h};'
-        )
 
 if __name__ == '__main__':
-    strings(720, 720)
+    strings(1280, 720)
