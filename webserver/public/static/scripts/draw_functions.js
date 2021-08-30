@@ -7,15 +7,18 @@ function intervalWebcamFrame (){
     var data = currentData;
 
     // update color code for classes
-    updateDrawingTable(data);
+    updateColorTable(data);
 
     // Draw the bounding boxes
     if (data.type == "detection_data"){
+        // clear info panel
+        info_panel.textContent = '';
+
         for (var j = 0, len2 = data.bbs.length; j < len2; ++j ){
             var bb = data.bbs[j];
             var text = data.classes[j];
             // Draw the rectangle that will contain the object name and confidence socre.
-            ctxWcVideo.fillStyle = classesTable[text].color;
+            ctxWcVideo.fillStyle = colorTable[text].color;
             x = bb[1];
             // Ensure that the rectangle is inside the allowable area.
             y = bb[0] + 0;
@@ -24,7 +27,7 @@ function intervalWebcamFrame (){
             ctxWcVideo.fillRect(x,y,w,h);
 
             // Draw the bounding box around the given obect
-            ctxWcVideo.strokeStyle = classesTable[text].color;
+            ctxWcVideo.strokeStyle = colorTable[text].color;
             ctxWcVideo.strokeRect(bb[1],
               bb[0],
               bb[3] - bb[1] - PADDING,
@@ -40,6 +43,11 @@ function intervalWebcamFrame (){
             ctxWcVideo.fillText(score,
                           x + 0, 
                           y + bbTextHPadding*2);
+
+            // Update info panel
+            let p = document.createElement('p');
+            p.innerText = `${text}: ${score}`;
+            info_panel.appendChild(p);
         }
     }
         
@@ -48,21 +56,21 @@ function intervalWebcamFrame (){
 };
     
 
-function updateDrawingTable(data) {
+function updateColorTable(data) {
   for(let i=0; i<data.classes.length; i++){
     let className = data.classes[i]
 
     // generate hex color code for class
-    if( !classesTable.hasOwnProperty(className) ){
+    if( !colorTable.hasOwnProperty(className) ){
       // generate color hex code for this class
       let color = '#'+(Math.random() * 0xFFFFFF << 0).toString(16).padStart(6, '0');
-      classesTable[className] = {}
-      classesTable[className]['color'] = color;
+      colorTable[className] = {}
+      colorTable[className]['color'] = color;
     }
 
     // update bounding box
-    classesTable[className]['bbs'] = data.bbs[i];
-    classesTable[className]['scores'] = data.scores[i];
+    colorTable[className]['bbs'] = data.bbs[i];
+    colorTable[className]['scores'] = data.scores[i];
   }
 }
 
