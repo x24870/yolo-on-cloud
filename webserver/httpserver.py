@@ -99,12 +99,12 @@ detectionData = DetectionDataHolder()
 detectionData.start()
 
 async def index(request):
-    content = open(os.path.join(ROOT + 'public/', 'index.html'), 'r').read()
+    content = open(os.path.join(ROOT, 'public', 'index.html'), 'r').read()
     return web.Response(content_type='text/html', text=content)
 
 
 async def javascript(request):
-    content = open(os.path.join(ROOT + 'public/', 'client.js'), 'r').read()
+    content = open(os.path.join(ROOT, 'public', 'client.js'), 'r').read()
     return web.Response(content_type='application/javascript', text=content)
 
 
@@ -128,7 +128,6 @@ async def offer(request):
         def on_message(message):
             try:
                 # Send data to ML Server. Currently only sends image height and width.
-                # data_socket_send.send_string(message)
                 message = json.loads(message)
                 message['pc_id'] = pc.id
                 data_socket_send.send_json(message)
@@ -181,10 +180,7 @@ async def offer(request):
         }))
 
 
-pcs = set();
-
-
-
+pcs = set()
 
 async def on_shutdown(app):
     # close peer connections
@@ -194,8 +190,6 @@ async def on_shutdown(app):
 
 
 def MAIN():
-
-
     if DEBUG:
         logging.basicConfig(level=logging.DEBUG)
 
@@ -204,7 +198,7 @@ def MAIN():
     app.router.add_get('/', index)
     app.router.add_get('/client.js', javascript)
     app.router.add_post('/offer', offer)
-    app.router.add_static('/static/', ROOT + 'public/static/', name='static',show_index=True)
+    app.router.add_static('/static/', os.path.join(ROOT, 'public', 'static'), name='static',show_index=True)
 
 
     ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
