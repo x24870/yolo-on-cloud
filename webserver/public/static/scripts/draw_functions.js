@@ -39,7 +39,7 @@ function intervalWebcamFrame (){
             ctxWcVideo.fillText(text,
                          x + 0, 
                          y + bbTextHPadding);
-            let score = data.scores[j].toFixed(2)
+            let score = data.scores[j]
             ctxWcVideo.fillText(score,
                           x + 0, 
                           y + bbTextHPadding*2);
