@@ -13,7 +13,7 @@ class ZeroMQImageInput(threading.Thread):
         self.name = "ZeroMQ Image Input Thread"
         self.images_data = {}
         self.image_for_predict = ImageData('', (), 0)
-        self.image_for_predict.image_np = np.zeros(shape=(608, 608, 3))
+        self.image_for_predict.image_np = np.zeros(shape=(608, 608, 3), dtype=np.float32)
         self.done = False
         self.image_lock = image_lock
 

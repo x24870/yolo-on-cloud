@@ -69,10 +69,10 @@ class DarknetYOLO(threading.Thread):
 
 
     def predict_once(self, pc_id, image_np):
-        # resize image to net size
-        # image_np = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        # convert to RGB channel and resize image to net size
+        rgb_image = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
         resized_image = cv2.resize(
-            image_np,
+            rgb_image,
             (self.darknet_width, self.darknet_height),
             interpolation=cv2.INTER_LINEAR
             )
