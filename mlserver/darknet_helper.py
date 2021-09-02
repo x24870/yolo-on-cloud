@@ -16,6 +16,7 @@ def convert2original(image, bbox, darknet_height, darknet_width):
     orig_width   = int(w * image_w)
     orig_height  = int(h * image_h)
 
-    bbox_converted = (orig_x, orig_y, orig_width, orig_height)
+    # bbox_converted = (orig_x, orig_y, orig_width, orig_height)
+    bbox_converted = (orig_y, orig_x, orig_height, orig_width)
 
     return bbox_converted
