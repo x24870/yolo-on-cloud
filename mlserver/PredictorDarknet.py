@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import darknet
 import pandas as pd
-from data_structures import OutputClassificationData
+from data_structures import DetectionResult
 from darknet_helper import convert2original
 
 class DarknetYOLO(threading.Thread):
@@ -27,9 +27,11 @@ class DarknetYOLO(threading.Thread):
         self.image_data = image_data
         self.done = False
         self.pause = False
-        self.output_datas = {}
         self.score_thresh = score_thresh
         self.fps = fps
+
+        # store detection results for different source
+        self.output_datas = {}
 
         # init darknet
         self.network, self.class_names, self.class_colors = darknet.load_network(
@@ -109,7 +111,7 @@ class DarknetYOLO(threading.Thread):
             bbs.append([top, left, buttom, right])
 
         if not self.output_datas.get(pc_id):
-            self.output_datas.setdefault(pc_id, OutputClassificationData())
+            self.output_datas.setdefault(pc_id, DetectionResult())
             #TODO: delete output_data if the timestamp of the id too old
         self.output_datas[pc_id].pc_id = pc_id
         self.output_datas[pc_id].scores = np.asarray(scores)

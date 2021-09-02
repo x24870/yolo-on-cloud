@@ -4,18 +4,22 @@ import numpy as np
 import cv2
 import base64
 import zmq
-from MODULE_DATA import ModuleData
-from data_structures import ImageData
+from data_structures import ImageData, OutputHandler
 
 class ZeroMQImageInput(threading.Thread):
     def __init__(self, context, image_lock):
+        # init instance variables
         threading.Thread.__init__(self)
         self.name = "ZeroMQ Image Input Thread"
+        self.image_lock = image_lock
+        self.done = False
+
+        # stores images from different source, use 'pc_id' as key
         self.images_data = {}
+
+        # the chosen image for detection
         self.image_for_predict = ImageData('', (), 0)
         self.image_for_predict.image_np = np.zeros(shape=(608, 608, 3), dtype=np.float32)
-        self.done = False
-        self.image_lock = image_lock
 
         # init image message queue receiver
         self.footage_socket = context.socket(zmq.SUB)
@@ -67,11 +71,18 @@ class ZeroMQImageInput(threading.Thread):
 class ZeroMQDataHandler(threading.Thread):
     def __init__(self,context, thread_yolo):
         threading.Thread.__init__(self)
+        # init instance variables
         self.name = 'ZeroMQ DataHandler'
         self.done = False
-        self.moduleData = ModuleData(thread_yolo)
+
+        # generate output data from detection result
+        self.outputHandler = OutputHandler(thread_yolo)
+
+        # init data message queue sender
         self.data_socket_send = context.socket(zmq.PUB)
         self.data_socket_send.connect('tcp://localhost:5557')
+
+        # init data message queue receiver
         self.data_socket_rcv = context.socket(zmq.SUB)
         self.data_socket_rcv.bind('tcp://*:5556')
         self.data_socket_rcv.setsockopt_string(zmq.SUBSCRIBE, str(''))
@@ -85,10 +96,9 @@ class ZeroMQDataHandler(threading.Thread):
         while not self.done:
             try:
                 message = self.data_socket_rcv.recv_json()
-                self.moduleData.updateData(message)
-                all_data = self.moduleData.create_detection_data(message['pc_id'])
+                self.outputHandler.updateData(message)
+                all_data = self.outputHandler.create_output_data(message['pc_id'])
                 self.data_socket_send.send_json(all_data)
-                #print("*** Sent data: " + str(all_data))
             except Exception as e:
                 print("Error occured sending or receiving data on ML client. " + str(e))
 
