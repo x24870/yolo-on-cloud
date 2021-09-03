@@ -57,6 +57,8 @@ function intervalWebcamFrame (){
     
 
 function updateColorTable(data) {
+  if(isObjectEmpty(data)) return;
+
   for(let i=0; i<data.classes.length; i++){
     let className = data.classes[i]
 
@@ -68,9 +70,6 @@ function updateColorTable(data) {
       colorTable[className]['color'] = color;
     }
 
-    // update bounding box
-    colorTable[className]['bbs'] = data.bbs[i];
-    colorTable[className]['scores'] = data.scores[i];
   }
 }
 

@@ -4,23 +4,5 @@ video {
   display: none;
 }
 
-#title {
-  text-align: center;
-}
-
-.flex-container {
-  display: flex;
-}
-
-div.canvas {
-  height: 480px;
-  width: 640px;
-  border: 1px solid black;
-}
-
-div.info {
-  width: 100%;
-  border: 1px solid black;
-}
 
 
