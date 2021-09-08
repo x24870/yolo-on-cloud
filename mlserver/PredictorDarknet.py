@@ -10,14 +10,13 @@ from data_structures import DetectionResult
 from darknet_helper import convert2original
 
 class Detector(threading.Thread):
-    def __ini__(self, stop_evt, img_q, res_q, score_thresh, YOLO_DIR):
+    def __init__(self, stop_evt, img_q, res_q, score_thresh, YOLO_DIR):
         self.createDataFile(YOLO_DIR)
         YOLO_DATA =  glob.glob(os.path.join(YOLO_DIR,'*.data'))[0]
         YOLO_CFG =  glob.glob(os.path.join(YOLO_DIR, '*.cfg'))[0]
         YOLO_WEIGHTS =  glob.glob(os.path.join(YOLO_DIR,'*.weights'))[0]
         CLASS_NAMES =  glob.glob(os.path.join(YOLO_DIR, '*.names'))[0]
         self.createClassNames(CLASS_NAMES)
-
         # init instance variables
         threading.Thread.__init__(self)
         self.stop_evt = stop_evt
@@ -109,11 +108,12 @@ class Detector(threading.Thread):
             #bbs.append([left, top, right, buttom]) #TODO: Modify frontend to comply this order
             bbs.append([top, left, buttom, right])
 
+        print('class: {}, score: {}'.format(classes, scores))
         res = DetectionResult(
             pc_id,
+            np.asanyarray(classes),
             np.asanyarray(scores),
-            np.asanyarray([classes]),
-            np.asanyarray([bbs])
+            np.asanyarray(bbs)
             )
 
         self.res_q.put(res)

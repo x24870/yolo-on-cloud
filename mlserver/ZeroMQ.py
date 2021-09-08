@@ -10,7 +10,7 @@ from data_structures import ImageData, OutputHandler
 class Frame():
     def __init__(self, pc_id, img_np):
         self.pc_id = pc_id
-        self.img = img_np
+        self.img_np = img_np
 
 class ZmqImgInput(threading.Thread):
     def __init__(self, stop_evt, context, img_q):
@@ -29,6 +29,7 @@ class ZmqImgInput(threading.Thread):
         self.frames = {}
 
     def run(self):
+        print('ZmqImgInput is running!')
         self.update_img()
         
     def update_img(self):
@@ -49,18 +50,19 @@ class ZmqImgInput(threading.Thread):
             npimg = np.fromstring(npimg, dtype=np.uint8)
             source = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
 
-            if not self.threads.get(pc_id):
+            if not self.frames.get(pc_id):
                 # create new thread for this connection
                 frame = Frame(pc_id, source)
                 self.frames[pc_id] = frame
+            else:
+                self.frames[pc_id].img_np = source
 
             if not self.img_q.full():
-                self.img_q.put(frame)
+                self.img_q.put(self.frames[pc_id])
 
 class ZmqDataHandler(threading.Thread):
     def __init__(self, stop_evt, context, res_q):
-        # generate output data from detection result
-        # self.outputHandler = OutputHandler(thread_yolo)
+        threading.Thread.__init__(self)
 
         # receive detect result from this queue 
         self.res_q = res_q
@@ -78,6 +80,7 @@ class ZmqDataHandler(threading.Thread):
         self.data_socket_rcv.setsockopt_string(zmq.SUBSCRIBE, str(''))
 
     def run(self):
+        print('ZmqDataHandler is running')
         self.update()
 
     def update(self):
@@ -88,10 +91,11 @@ class ZmqDataHandler(threading.Thread):
 
                 res = self.res_q.get() # class DetectionResult
                 res_json = {}
+                res_json['type'] = 'detection_data'
                 res_json['pc_id'] = res.pc_id
-                res_json['classes'] = res.classes
-                res_json['scores'] = res.scores
-                res_json['bbs'] = res.bbs
+                res_json['classes'] = res.classes.tolist()
+                res_json['scores'] = res.scores.tolist()
+                res_json['bbs'] = res.bbs.tolist()
 
                 self.data_socket_send.send_json(res_json)
             except Exception as e:
