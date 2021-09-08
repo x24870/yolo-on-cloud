@@ -108,7 +108,7 @@ class Detector(threading.Thread):
             #bbs.append([left, top, right, buttom]) #TODO: Modify frontend to comply this order
             bbs.append([top, left, buttom, right])
 
-        print('class: {}, score: {}'.format(classes, scores))
+        #print('class: {}, score: {}'.format(classes, scores))
         res = DetectionResult(
             pc_id,
             np.asanyarray(classes),

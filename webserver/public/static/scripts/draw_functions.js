@@ -20,11 +20,15 @@ function intervalWebcamFrame (){
             // Draw the rectangle that will contain the object name and confidence socre.
             ctxWcVideo.fillStyle = colorTable[text].color;
             x = bb[1];
-            // Ensure that the rectangle is inside the allowable area.
-            y = bb[0] + 0;
+            y = bb[0];
             w = bb[3] - bb[1];
-            h = Math.ceil(y*TEXT_BOX_HEIGHT);
-            ctxWcVideo.fillRect(x,y,w,h);
+            h = bbTextSize * 2.5
+            ctxWcVideo.fillRect(
+              x,
+              y - h,
+              w,
+              h
+            );
 
             // Draw the bounding box around the given obect
             ctxWcVideo.strokeStyle = colorTable[text].color;
@@ -38,11 +42,11 @@ function intervalWebcamFrame (){
             ctxWcVideo.fillStyle = '#FFFFFF'
             ctxWcVideo.fillText(text,
                          x + 0, 
-                         y + bbTextHPadding);
+                         y - bbTextSize*1.5);
             let score = data.scores[j]
             ctxWcVideo.fillText(score,
                           x + 0, 
-                          y + bbTextHPadding*2);
+                          y);
 
             // Update info panel
             let p = document.createElement('p');
