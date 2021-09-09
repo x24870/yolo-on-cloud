@@ -10,7 +10,6 @@ sphinxcontrib-asyncio
 pyzmq
 numpy
 cython
-yolo-v4
 pandas
 glob2
 aiohttp
