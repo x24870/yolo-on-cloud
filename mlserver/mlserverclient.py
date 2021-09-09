@@ -36,18 +36,3 @@ thread_handler.start()
 thread_img.join()
 thread_detector.join()
 thread_handler.join()
-
-# context = zmq.Context()
-# image_lock = threading.Lock()
-
-# thread_image = ZeroMQImageInput(context, image_lock)
-# thread_image.start()
-
-# thread_yolo = DarknetYOLO(thread_image.image_for_predict,
-#                             image_lock,
-#                             YOLO_DIR=ROOT + "/yolov4/coco",
-#                             score_thresh=0.1,fps = 0.08)
-# thread_yolo.start()
-
-# thread_zeromqdatahandler = ZeroMQDataHandler(context,thread_yolo)
-# thread_zeromqdatahandler.start()
