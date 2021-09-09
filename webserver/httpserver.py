@@ -1,4 +1,5 @@
-import argparse
+import uuid
+import time
 import asyncio
 import json
 import logging
@@ -24,17 +25,22 @@ context = zmq.Context()
 
 data_socket_send = context.socket(zmq.PUB)
 data_socket_send.connect('tcp://localhost:5556')
-DEBUG = True;
-port = 443;
+DEBUG = False
+port = 443
 
+class CustomPC(RTCPeerConnection):
+    def __init__(self):
+        super().__init__()
+        self.id = str(uuid.uuid4())
 
 class VideoTransformTrack(VideoStreamTrack):
-    def __init__(self, track):
+    def __init__(self, track, pc_id):
         super().__init__()
         self.counter = 0
         self.track = track
         self.footage_socket = context.socket(zmq.PUB)
         self.footage_socket.connect('tcp://localhost:5555')
+        self.pc_id = pc_id
 
 
     async def recv(self):
@@ -42,9 +48,17 @@ class VideoTransformTrack(VideoStreamTrack):
         try:
             # Send via MQTT
             img = frame.to_ndarray(format='bgr24')
-            encoded, buffer = cv2.imencode('.jpg', img)
+            encoded, buf = cv2.imencode('.jpg', img)
+            buf = base64.b64encode(buf.tobytes())
+            buf = buf.decode('utf-8')
+            timestamp = int(time.time())
+            data = {
+                'pc_id': self.pc_id,
+                'buf': buf,
+                'ts': timestamp
+            }
             # Send Webcam stream from HTTP Server -> ML Server
-            self.footage_socket.send(base64.b64encode(buffer))
+            self.footage_socket.send_json(data)
             return frame
         except Exception as e:
             print("An error occured sending over MQTT: " + str(e))
@@ -58,7 +72,7 @@ class DetectionDataHolder(threading.Thread):
         threading.Thread.__init__(self)
         self.name = 'ZeroMQ DataHandler'
         self.done = False
-        self.data = "{}"
+        self.detection_datas = {}
         self.data_socket_rcv = context.socket(zmq.SUB)
         self.data_socket_rcv.bind('tcp://*:5557')
         self.data_socket_rcv.setsockopt_string(zmq.SUBSCRIBE, str(''))
@@ -72,7 +86,8 @@ class DetectionDataHolder(threading.Thread):
     def update(self, threadName):
         while not self.done:
             try:
-                self.data = self.data_socket_rcv.recv_string()
+                data = self.data_socket_rcv.recv_json()
+                self.detection_datas[data['pc_id']] = data
             except:
                 print("Error occured receiving data on ML client")
 
@@ -84,12 +99,12 @@ detectionData = DetectionDataHolder()
 detectionData.start()
 
 async def index(request):
-    content = open(os.path.join(ROOT + 'public/', 'index.html'), 'r').read()
+    content = open(os.path.join(ROOT, 'public', 'index.html'), 'r').read()
     return web.Response(content_type='text/html', text=content)
 
 
 async def javascript(request):
-    content = open(os.path.join(ROOT + 'public/', 'client.js'), 'r').read()
+    content = open(os.path.join(ROOT, 'public', 'client.js'), 'r').read()
     return web.Response(content_type='application/javascript', text=content)
 
 
@@ -100,7 +115,7 @@ async def offer(request):
         sdp=params['sdp'],
         type=params['type'])
 
-    pc = RTCPeerConnection()
+    pc = CustomPC()
     pcs.add(pc)
 
 
@@ -113,10 +128,13 @@ async def offer(request):
         def on_message(message):
             try:
                 # Send data to ML Server. Currently only sends image height and width.
-                data_socket_send.send_string(message)
+                message = json.loads(message)
+                message['pc_id'] = pc.id
+                data_socket_send.send_json(message)
                 if DEBUG:
-                    print("Message to browser: " + str(detectionData.data))
-                channel.send(detectionData.data)
+                    print("Message to browser: " + str(detectionData.detection_datas[pc.id]))
+                data = json.dumps(detectionData.detection_datas[pc.id])
+                channel.send(data)
             except:
                 print("Failed receiving module data.")
                 channel.send("{}")
@@ -137,7 +155,7 @@ async def offer(request):
 
 
         if track.kind == 'video':
-            local_video = VideoTransformTrack(track)
+            local_video = VideoTransformTrack(track, pc.id)
             pc.addTrack(local_video)
             print("Added local video (cnn).")
 
@@ -162,10 +180,7 @@ async def offer(request):
         }))
 
 
-pcs = set();
-
-
-
+pcs = set()
 
 async def on_shutdown(app):
     # close peer connections
@@ -175,8 +190,6 @@ async def on_shutdown(app):
 
 
 def MAIN():
-
-
     if DEBUG:
         logging.basicConfig(level=logging.DEBUG)
 
@@ -185,7 +198,7 @@ def MAIN():
     app.router.add_get('/', index)
     app.router.add_get('/client.js', javascript)
     app.router.add_post('/offer', offer)
-    app.router.add_static('/static/', ROOT + 'public/static/', name='static',show_index=True)
+    app.router.add_static('/static/', os.path.join(ROOT, 'public', 'static'), name='static',show_index=True)
 
 
     ssl_ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)

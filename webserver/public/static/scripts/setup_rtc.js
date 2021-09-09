@@ -79,13 +79,13 @@ function startDataChannels() {
     };
     dc.onmessage = function(evt) {
       // Receive Data
-      tempData = evt.data;
+      if(!DEBUG) {tempData = evt.data;}
       // Send the data.
-      dc.send(JSON.stringify({'image_properties':{'height':wc_coords[3],
-                                         'width':wc_coords[2],
-                                        }
-                              }));
-        console.log('***message received: ' + tempData)
+      dc.send(JSON.stringify({'image_properties':{
+                                'height':wc_coords[3],
+                                'width':wc_coords[2],
+                                }}));
+      console.log('*** message received: ' + tempData)
         
     };
 
@@ -100,7 +100,7 @@ function startDataChannels() {
         width: parseInt(videoWidth, 0),
         height: parseInt(videoHeight, 0)
     };
-
+    console.log(`videoWidth: ${videoWidth}, videoHeight:${videoHeight}`);
 
     navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
         stream.getTracks().forEach(function(track) {

@@ -1,13 +1,12 @@
 import warnings
+
+from zmq.error import ZMQBaseError
 warnings.filterwarnings('ignore')
 
-from PredictorDarknet import DarknetYOLO
-import time
-import cv2
-from PIL import Image
-
-from ZeroMQ import ZeroMQDataHandler
-from ZeroMQ import ZeroMQImageInput
+import threading
+from queue import Queue
+from PredictorDarknet import Detector
+from ZeroMQ import ZmqImgInput, ZmqDataHandler
 
 import zmq
 print("Finished Loading Imports")
@@ -16,15 +15,24 @@ import os
 ROOT = os.path.dirname(os.path.realpath(__file__))
 
 context = zmq.Context()
+img_q = Queue(maxsize=1)
+res_q = Queue(maxsize=1)
+stop_evt = threading.Event()
 
-thread_image = ZeroMQImageInput(context);
-thread_image.start()
+thread_img = ZmqImgInput(stop_evt, context, img_q)
+thread_detector = Detector(
+    stop_evt,
+    img_q,
+    res_q,
+    0.5,
+    os.path.join(ROOT, 'yolov4', 'coco')
+    )
+thread_handler = ZmqDataHandler(stop_evt, context, res_q)
 
-thread_yolo = DarknetYOLO(thread_image.image_data,
-                        YOLO_DIR=ROOT + "/model/",
-                          score_thresh=0.1,
-                         fps = 0.08)
-thread_yolo.start()
+thread_img.start()
+thread_detector.start()
+thread_handler.start()
 
-thread_zeromqdatahandler = ZeroMQDataHandler(context,thread_yolo)
-thread_zeromqdatahandler.start()
+thread_img.join()
+thread_detector.join()
+thread_handler.join()

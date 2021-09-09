@@ -5,8 +5,7 @@ function setupScreenSizes(){
 
 
         console.log("Screen width " + screenWidth + " Screen height " + screenHeight);
-        canvas.width = 640;
-        canvas.height = 480;
+        canvas.width = 640; canvas.height = 480;
    
     
         // Update the Webcam Values wrt the canvas dimensions

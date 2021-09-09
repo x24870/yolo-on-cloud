@@ -1,86 +1,100 @@
 import threading
 import base64
 import numpy as np
-import time
-from MODULE_DATA import ModuleData
 import cv2
 import base64
 import zmq
 
-class ImageData:
-    def __init__(self):
-        self.image_np = ()
-        self.isInit = False
-        self.width = None
-        self.height = None
+class Frame():
+    def __init__(self, pc_id, img_np):
+        self.pc_id = pc_id
+        self.img_np = img_np
 
-class ZeroMQImageInput(threading.Thread):
-    def __init__(self, context, IMAGE_WIDTH = 640 ,IMAGE_HEIGHT = 480):
+class ZmqImgInput(threading.Thread):
+    def __init__(self, stop_evt, context, img_q):
         threading.Thread.__init__(self)
-        self.name = "ZeroMQ Image Input Thread"
-        self.image_data = ImageData()
-        self.done = False
-        self.IMAGE_WIDTH = IMAGE_WIDTH
-        self.IMAGE_HEIGHT = IMAGE_HEIGHT
-        self.cap = []  
-        self.image_data.image_np = np.zeros(shape=(IMAGE_HEIGHT,IMAGE_WIDTH,3))
-        self.currentTime = 0
-        self.image_data.isInit = True
+        self.stop_evt = stop_evt
+
+        # init image message queue receiver
         self.footage_socket = context.socket(zmq.SUB)
         self.footage_socket.bind('tcp://*:5555')
         self.footage_socket.setsockopt_string(zmq.SUBSCRIBE, str(''))
 
+        # queue for communicate with yolo thread
+        self.img_q = img_q
+
+        # threads of each connection ID
+        self.frames = {}
+
     def run(self):
-        print("Starting " + self.name)
-        self.updateImg(self.name)
-        print("Exiting " + self.name)
-
-    def updateImg(self, threadName):
-        while not self.done:
-            frame = self.footage_socket.recv_string()
-            img = base64.b64decode(frame)
-            npimg = np.fromstring(img, dtype=np.uint8)
-            source = cv2.imdecode(npimg, 1)
-            self.image_data.image_np = source
-
-    def getImage(self):
-        return self.image_data.image_np
-
-    def stop(self):
-        self.done = True
+        print('ZmqImgInput is running!')
+        self.update_img()
         
-class ZeroMQDataHandler(threading.Thread):
-    def __init__(self,context, thread_yolo):
+    def update_img(self):
+        while not self.stop_evt.is_set():
+            data = self.footage_socket.recv_json()
+
+            # received data must contains pc_id, timestamp and image buffer
+            try:
+                pc_id = data['pc_id']
+                # timestamp = data['ts']
+                npimg = data['buf'].encode()
+            except:
+                print('{} received invalid data.'.format(self.name))
+                continue
+
+            # convert image buffer to image format
+            npimg = base64.b64decode(npimg)
+            npimg = np.fromstring(npimg, dtype=np.uint8)
+            source = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+
+            if not self.frames.get(pc_id):
+                # create new thread for this connection
+                frame = Frame(pc_id, source)
+                self.frames[pc_id] = frame
+            else:
+                self.frames[pc_id].img_np = source
+
+            if not self.img_q.full():
+                self.img_q.put(self.frames[pc_id])
+
+class ZmqDataHandler(threading.Thread):
+    def __init__(self, stop_evt, context, res_q):
         threading.Thread.__init__(self)
-        self.name = 'ZeroMQ DataHandler'
-        self.done = False
-        self.moduleData = ModuleData(thread_yolo)
+
+        # receive detect result from this queue 
+        self.res_q = res_q
+
+        # stop event
+        self.stop_evt = stop_evt
+
+        # init data message queue sender
         self.data_socket_send = context.socket(zmq.PUB)
         self.data_socket_send.connect('tcp://localhost:5557')
+
+        # init data message queue receiver
         self.data_socket_rcv = context.socket(zmq.SUB)
         self.data_socket_rcv.bind('tcp://*:5556')
         self.data_socket_rcv.setsockopt_string(zmq.SUBSCRIBE, str(''))
 
-
-
     def run(self):
-        print("Starting " + self.name)
-        self.update(self.name)
-        print("Exiting " + self.name)
+        print('ZmqDataHandler is running')
+        self.update()
 
-    def update(self, threadName):
-        while not self.done:
+    def update(self):
+        while not self.stop_evt.is_set():
             try:
-                data = self.data_socket_rcv.recv_string()
-                self.moduleData.updateData(data)
-                all_data = self.moduleData.create_detection_data()
-                self.data_socket_send.send_string(all_data)
-                print("ALLLLLLLL_DATA: " + str(all_data))
-                #print(data)
+                # a signal to trigger getting detection result
+                _ = self.data_socket_rcv.recv_json()
+
+                res = self.res_q.get() # class DetectionResult
+                res_json = {}
+                res_json['type'] = 'detection_data'
+                res_json['pc_id'] = res.pc_id
+                res_json['classes'] = res.classes.tolist()
+                res_json['scores'] = res.scores.tolist()
+                res_json['bbs'] = res.bbs.tolist()
+
+                self.data_socket_send.send_json(res_json)
             except Exception as e:
                 print("Error occured sending or receiving data on ML client. " + str(e))
-
-    def stop(self):
-        self.done = True
-
-   
