@@ -1,1 +1,2 @@
 mlserver/yolov4/libdarknet.so filter=lfs diff=lfs merge=lfs -text
+mlserver/yolov4/coco/yolov4.weights filter=lfs diff=lfs merge=lfs -text
