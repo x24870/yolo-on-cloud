@@ -2,5 +2,3 @@
 __pycache__/
 nohup.out
 Pipfile
-mlserver/model
-mlserver/yolov4/*
