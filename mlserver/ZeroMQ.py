@@ -36,9 +36,9 @@ class ZmqImgInput(threading.Thread):
 
             # received data must contains pc_id, timestamp and image buffer
             try:
-                pc_id = data['pc_id']
-                # timestamp = data['ts']
-                npimg = data['buf'].encode()
+                pc_id = data['id']
+                timestamp = data['timestamp']
+                npimg = data['image'].encode()
             except:
                 print('{} received invalid data.'.format(self.name))
                 continue
