@@ -78,6 +78,7 @@ case ${tag} in
     enable_gpu
     enable_cudnn
     enable_opencv
+    enable_libso
     ;;
   "gpu-cc53")
     enable_gpu

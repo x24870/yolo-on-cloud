@@ -68,6 +68,12 @@ class Detector(threading.Thread):
 
 
     def detect_once(self, pc_id, img_np):
+        # crop image, only keep center 1/4 of image 
+        y = int(img_np.shape[0]/4)
+        x = int(img_np.shape[1]/4)
+        w = x*2
+        h = y*2
+        img_np = img_np[y:y+h, x:x+w]
         # convert to RGB channel and resize image to net size
         rgb_image = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)
         resized_image = cv2.resize(
@@ -107,7 +113,7 @@ class Detector(threading.Thread):
             #bbs.append([left, top, right, buttom]) #TODO: Modify frontend to comply this order
             bbs.append([top, left, buttom, right])
 
-        #print('class: {}, score: {}'.format(classes, scores))
+        print('class: {}, score: {}'.format(classes, scores))
         res = DetectionResult(
             pc_id,
             np.asanyarray(classes),
@@ -115,6 +121,7 @@ class Detector(threading.Thread):
             np.asanyarray(bbs)
             )
 
-        self.res_q.put(res)
+        if not self.res_q.full():
+            self.res_q.put(res)
 
 

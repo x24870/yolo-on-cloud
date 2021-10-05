@@ -17,7 +17,7 @@ class ZmqImgInput(threading.Thread):
 
         # init image message queue receiver
         self.footage_socket = context.socket(zmq.SUB)
-        self.footage_socket.connect('tcp://localhost:5555')
+        self.footage_socket.connect('tcp://0.0.0.0:5555')
         self.footage_socket.setsockopt_string(zmq.SUBSCRIBE, str(''))
 
         # queue for communicate with yolo thread
