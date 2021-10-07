@@ -97,6 +97,8 @@ class Detector(threading.Thread):
         # release darknet image
         darknet.free_image(darknet_image)
 
+        if not detections: return
+
         classes = []
         scores = []
         bbs = []
@@ -116,9 +118,10 @@ class Detector(threading.Thread):
         print('class: {}, score: {}'.format(classes, scores))
         res = DetectionResult(
             pc_id,
-            np.asanyarray(classes),
-            np.asanyarray(scores),
-            np.asanyarray(bbs)
+            classes,
+            scores,
+            bbs,
+            img_np
             )
 
         if not self.res_q.full():

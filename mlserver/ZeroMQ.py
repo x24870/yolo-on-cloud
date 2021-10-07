@@ -1,8 +1,8 @@
+import json
 import threading
 import base64
 import numpy as np
 import cv2
-import base64
 import zmq
 
 class Frame():
@@ -70,7 +70,7 @@ class ZmqDataHandler(threading.Thread):
 
         # init data message queue sender
         self.data_socket_send = context.socket(zmq.PUB)
-        self.data_socket_send.connect('tcp://localhost:5557')
+        self.data_socket_send.bind('tcp://*:5557')
 
         # init data message queue receiver
         self.data_socket_rcv = context.socket(zmq.SUB)
@@ -85,16 +85,25 @@ class ZmqDataHandler(threading.Thread):
         while not self.stop_evt.is_set():
             try:
                 # a signal to trigger getting detection result
-                _ = self.data_socket_rcv.recv_json()
+                #_ = self.data_socket_rcv.recv_json()
 
                 res = self.res_q.get() # class DetectionResult
                 res_json = {}
                 res_json['type'] = 'detection_data'
                 res_json['pc_id'] = res.pc_id
-                res_json['classes'] = res.classes.tolist()
-                res_json['scores'] = res.scores.tolist()
-                res_json['bbs'] = res.bbs.tolist()
+                res_json['classes'] = res.classes
+                res_json['scores'] = res.scores
+                res_json['bbs'] = res.bbs
+                
+                # prepare a zmq frame that contains cropped image
+                img_msg = bytearray(b'image ')
+                _, jpg_img = cv2.imencode('.jpg', res.cropped_img)
+                img_msg.extend(jpg_img)
 
-                self.data_socket_send.send_json(res_json)
+                # send message to websocket service
+                msg = json.dumps(res_json)
+                self.data_socket_send.send(f"detection_data {msg}".encode())
+                self.data_socket_send.send(img_msg)
+
             except Exception as e:
                 print("Error occured sending or receiving data on ML client. " + str(e))
