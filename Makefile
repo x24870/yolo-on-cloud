@@ -30,15 +30,11 @@ docker:
 	docker tag ${LOCAL_IMAGE} ${GCR_IMAGE_COMMIT}
 	docker tag ${LOCAL_IMAGE} ${GCR_IMAGE_LATEST}
 
-deploy: creds
-	@echo "Deploying..."
-	docker push ${GCR_IMAGE_COMMIT}
-	docker push ${GCR_IMAGE_LATEST}
-	kubectl set image deployment/${SERVICE_NAME} ${SERVICE_NAME}=${GCR_IMAGE_COMMIT}
-	kubectl rollout status deployment/${SERVICE_NAME}
+deploy:
+	nvidia-docker run -itd --network host ${LOCAL_IMAGE}
 
 run:
-	docker run -itd -p 5555\:5555 -p 5557\:5557 ${LOCAL_IMAGE}
+	nvidia-docker run -it --network host ${LOCAL_IMAGE}
 
 clean:
 	rm -f ./${SERVICE_NAME}

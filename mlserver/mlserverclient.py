@@ -24,8 +24,8 @@ thread_detector = Detector(
     stop_evt,
     img_q,
     res_q,
-    0.5,
-    os.path.join(ROOT, 'yolov4', 'coco')
+    0.1,
+    os.path.join(ROOT, 'yolov4', 'cards')
     )
 thread_handler = ZmqDataHandler(stop_evt, context, res_q)
 
