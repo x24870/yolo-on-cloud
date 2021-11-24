@@ -11,9 +11,9 @@ from darknet_helper import convert2original
 class Detector(threading.Thread):
     def __init__(self, stop_evt, img_q, res_q, score_thresh, YOLO_DIR):
         self.createDataFile(YOLO_DIR)
-        YOLO_DATA =  glob.glob(os.path.join(YOLO_DIR,'*.data'))[0]
-        YOLO_CFG =  glob.glob(os.path.join(YOLO_DIR, '*.cfg'))[0]
-        YOLO_WEIGHTS =  glob.glob(os.path.join(YOLO_DIR,'*.weights'))[0]
+        YOLO_DATA =  glob.glob(os.path.join(YOLO_DIR,'cards.data'))[0]
+        YOLO_CFG =  glob.glob(os.path.join(YOLO_DIR, 'yolov4-custom.cfg'))[0]
+        YOLO_WEIGHTS =  glob.glob(os.path.join(YOLO_DIR,'yolov4-custom_35000.weights'))[0]
         CLASS_NAMES =  glob.glob(os.path.join(YOLO_DIR, '*.names'))[0]
         self.createClassNames(CLASS_NAMES)
         # init instance variables
@@ -64,16 +64,27 @@ class Detector(threading.Thread):
     def detect(self):
         while not self.stop_evt.is_set():
             frame = self.img_q.get()
+            print("got frame")
             self.detect_once(frame.pc_id, frame.img_np)
 
 
     def detect_once(self, pc_id, img_np):
-        # crop image, only keep center 1/4 of image 
-        y = int(img_np.shape[0]/4)
-        x = int(img_np.shape[1]/4)
-        w = x*2
-        h = y*2
-        img_np = img_np[y:y+h, x:x+w]
+        # perspective transform
+        H, W = img_np.shape[:2]
+        pspect = -200
+        pts1 = np.float32([[0, 0], [W, 0], [0, H], [W, H]])
+        pts2 = np.float32([[pspect,0], [W-pspect, 0], [0, H], [W, H]])
+        #pts2 = np.float32([[0, 0], [W, 0], [pspect, H], [W-pspect, H]])
+        M = cv2.getPerspectiveTransform(pts1, pts2)
+        img_np = cv2.warpPerspective(img_np, M, (W, H))
+
+        # crop img
+        #y = int(img_np.shape[0]/4)
+        #x = int(img_np.shape[1]/4)
+        #w = x*2
+        #h = y*2
+        #img_np = img_np[y:y+h, x:x+w]
+
         # convert to RGB channel and resize image to net size
         rgb_image = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)
         resized_image = cv2.resize(
