@@ -10,12 +10,13 @@ logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
 class Card:
-    def __init__(self, vertical, belongs, pattern, confidence, pair):
+    def __init__(self, vertical, belongs, pattern, confidence, pair, pair_centroid):
         self.is_vertical = vertical # false: horizontal
         self.belongs_to = belongs # false: banker
         self.pattern = pattern
         self.confidence = confidence
         self.pair = pair
+        self.pair_centroid = pair_centroid
         self.value = self._get_value(pattern)
 
     def __str__(self):
@@ -41,16 +42,6 @@ class raw_pattern:
         self.score = score
         self.bbox = bbox # x, y, w, h
         self.is_vertical = bbox[2] < bbox[3]
-
-raw = [
-    ['Jd', 94.02, (821, 567, 31, 38)],
-    ['Jh', 94.25, (724, 469, 31, 38)],
-    ['8s', 98.35, (1165, 808, 36, 49)],
-    ['4d', 99.84, (1196, 708, 35, 45)],
-    ['4d', 99.84, (1299, 805, 34, 44)],
-    ['Ac', 99.87, (539, 459, 57, 22)],
-    ['Ac', 99.94, (413, 534, 56, 26)]
-]
 
 def get_centroid(bbox):
     return (
@@ -104,6 +95,7 @@ def process_cards_info(raw):
         # if yes, specify next bbox is on same card
         if raw:
             found_pair = False
+            pair_centroid = None
             # x is on left or right side of table
             belongs = False if r[2][0] > 960 else True
             if at_diagnal(r[2], raw[0][2]):
@@ -112,15 +104,33 @@ def process_cards_info(raw):
                 
                 logger.debug(f'{r} found pair {dia}')
                 found_pair = True
+                # get centriod of two patterns
+                print(r, dia)
+                pair_centroid = (
+                    (r[2][0] + dia[2][0] + dia[2][2])/2,
+                    (r[2][1] + dia[2][1] + dia[2][3])/2
+                )
             card = Card(
                 r[2][2]<r[2][3], # vertical
                 belongs, # belongs
                 r[0], # pattern
                 r[1], # score
-                found_pair # pair
+                found_pair, # pair
+                pair_centroid
                 )
             cards.append(card)
     return cards
 
-cards = process_cards_info(raw)
-logger.debug(cards)
+if __name__ == '__main__':
+    raw = [
+    ['Jd', 94.02, (821, 567, 31, 38)],
+    ['Jh', 94.25, (724, 469, 31, 38)],
+    ['8s', 98.35, (1165, 808, 36, 49)],
+    ['4d', 99.84, (1196, 708, 35, 45)],
+    ['4d', 99.84, (1299, 805, 34, 44)],
+    ['Ac', 99.87, (539, 459, 57, 22)],
+    ['Ac', 99.94, (413, 534, 56, 26)]
+    ]
+
+    cards = process_cards_info(raw)
+    logger.debug(cards)
