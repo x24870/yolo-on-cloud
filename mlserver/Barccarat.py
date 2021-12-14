@@ -18,7 +18,15 @@ class Desk():
         self.player = Player()
 
     def scan_desk(self, cards):
-        pass
+        p_cards = []
+        b_cards = []
+        for c in cards:
+            if c.belongs_to: #player
+                p_cards.append(c)
+            else:
+                b_cards.append(c)
+        self.player.scan_hand(p_cards)
+        self.banker.scan_hand(b_cards)
 
     def reset(self):
         pass
@@ -34,17 +42,10 @@ class Baccarat:
         self.frame = 0
         self.desk = Desk()
 
-    def handle_cards(self, cards):
-        for c in cards:
-            if c.belongs_to: # player
-                self.player.cards.append(c)
-            else: # banker
-                self.banker.cards.append(c)
-
     def get_result(self):
         if self.desk.player.total_value > self.desk.banker.total_value:
             logger.debug('player won!')
-        elif self.player.total_value < self.banker.total_value:
+        elif self.desk.player.total_value < self.desk.banker.total_value:
             logger.debug('banker won')
         else:
             logger.debug('Tie')
@@ -72,6 +73,4 @@ if __name__ == '__main__':
         logger.debug(c)
 
     baccarat = Baccarat()
-    baccarat.handle_cards(cards)
-    res = baccarat.get_result()
-    print(res)
+    baccarat.desk.scan_desk(cards)
