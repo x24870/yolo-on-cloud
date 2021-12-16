@@ -167,8 +167,8 @@ def detect_image(network, class_names, image, thresh=.5, hier_thresh=.5, nms=.45
 
 if os.name == "posix":
     cwd = os.path.dirname(__file__)
-    yolo_path = os.path.join('/', 'usr', 'local', 'bin', 'libdarknet.so') # libdarknet.so for docker
-    #yolo_path = os.path.join(cwd, 'yolov4', 'libdarknet.so')
+    #yolo_path = os.path.join('/', 'usr', 'local', 'bin', 'libdarknet.so') # libdarknet.so for docker
+    yolo_path = os.path.join(cwd, 'yolov4', 'libdarknet.so')
     lib = CDLL(yolo_path, RTLD_GLOBAL)
 elif os.name == "nt":
     cwd = os.path.dirname(__file__)

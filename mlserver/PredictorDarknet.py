@@ -13,7 +13,7 @@ class Detector(threading.Thread):
         self.createDataFile(YOLO_DIR)
         YOLO_DATA =  glob.glob(os.path.join(YOLO_DIR,'cards.data'))[0]
         YOLO_CFG =  glob.glob(os.path.join(YOLO_DIR, 'yolov4-custom.cfg'))[0]
-        YOLO_WEIGHTS =  glob.glob(os.path.join(YOLO_DIR,'yolov4-custom_35000.weights'))[0]
+        YOLO_WEIGHTS =  glob.glob(os.path.join(YOLO_DIR,'yolov4-custom_40000.weights'))[0]
         CLASS_NAMES =  glob.glob(os.path.join(YOLO_DIR, '*.names'))[0]
         self.createClassNames(CLASS_NAMES)
         # init instance variables
@@ -67,7 +67,6 @@ class Detector(threading.Thread):
             print("got frame")
             self.detect_once(frame.pc_id, frame.img_np)
 
-
     def detect_once(self, pc_id, img_np):
         # perspective transform
         H, W = img_np.shape[:2]
@@ -108,7 +107,7 @@ class Detector(threading.Thread):
         # release darknet image
         darknet.free_image(darknet_image)
 
-        if not detections: return
+        #if not detections: return
 
         classes = []
         scores = []
@@ -132,7 +131,7 @@ class Detector(threading.Thread):
             classes,
             scores,
             bbs,
-            img_np
+            None #img_np
             )
 
         if not self.res_q.full():

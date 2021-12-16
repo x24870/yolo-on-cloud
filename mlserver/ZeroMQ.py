@@ -96,14 +96,14 @@ class ZmqDataHandler(threading.Thread):
                 res_json['bbs'] = res.bbs
                 
                 # prepare a zmq frame that contains cropped image
-                img_msg = bytearray(b'image ')
-                _, jpg_img = cv2.imencode('.jpg', res.cropped_img)
-                img_msg.extend(jpg_img)
+                #img_msg = bytearray(b'image ')
+                #_, jpg_img = cv2.imencode('.jpg', res.cropped_img)
+                #img_msg.extend(jpg_img)
 
                 # send message to websocket service
                 msg = json.dumps(res_json)
                 self.data_socket_send.send(f"detection_data {msg}".encode())
-                self.data_socket_send.send(img_msg)
+                #self.data_socket_send.send(img_msg)
 
             except Exception as e:
                 print("Error occured sending or receiving data on ML client. " + str(e))
