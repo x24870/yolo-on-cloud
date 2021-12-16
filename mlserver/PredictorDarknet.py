@@ -7,6 +7,8 @@ import darknet
 import pandas as pd
 from data_structures import DetectionResult
 from darknet_helper import convert2original
+import Barccarat
+import Card_processor as cardp
 
 class Detector(threading.Thread):
     def __init__(self, stop_evt, img_q, res_q, score_thresh, YOLO_DIR):
@@ -22,6 +24,7 @@ class Detector(threading.Thread):
         self.img_q = img_q
         self.res_q = res_q
         self.score_thresh = score_thresh
+        self.baccarat = Barccarat()
 
         # init darknet
         self.network, self.class_names, self.class_colors = darknet.load_network(
@@ -127,12 +130,17 @@ class Detector(threading.Thread):
             bbs.append([top, left, buttom, right])
 
         print('class: {}, score: {}'.format(classes, scores))
+
+        # baccarat
+        cards = cardp.process_cards_info(detections)
+
         res = DetectionResult(
             pc_id,
             classes,
             scores,
             bbs,
-            img_np
+            img_np,
+            cards
             )
 
         if not self.res_q.full():

@@ -89,21 +89,34 @@ class ZmqDataHandler(threading.Thread):
 
                 res = self.res_q.get() # class DetectionResult
                 res_json = {}
-                res_json['type'] = 'detection_data'
-                res_json['pc_id'] = res.pc_id
-                res_json['classes'] = res.classes
-                res_json['scores'] = res.scores
-                res_json['bbs'] = res.bbs
-                
-                # prepare a zmq frame that contains cropped image
-                img_msg = bytearray(b'image ')
-                _, jpg_img = cv2.imencode('.jpg', res.cropped_img)
-                img_msg.extend(jpg_img)
+                # detection raw data
+                raw = 'raw'
+                res_json[raw] = {}
+                res_json[raw]['pc_id'] = res.pc_id
+                res_json[raw]['classes'] = res.classes
+                res_json[raw]['scores'] = res.scores
+                res_json[raw]['bbs'] = res.bbs
+                # processed cards data
+                cards = 'cards'
+                res_json[cards] = {}
+                res_json[cards]['is_vertical'] = []
+                res_json[cards]['belongs'] = []
+                res_json[cards]['pattern'] = []
+                res_json[cards]['confidence'] = []
+                res_json[cards]['pair'] = []
+                res_json[cards]['pair_centroid'] = []
+                for c in res.cards:
+                    res_json[cards]['is_vertical'].append(c.is_vertical)
+                    res_json[cards]['belongs'].append(c.belongs)
+                    res_json[cards]['pattern'].append(c.pattern)
+                    res_json[cards]['confidence'].append(c.confidence)
+                    res_json[cards]['pair'].append(c.pair)
+                    res_json[cards]['pair_centroid'].append(c.pair_centroid)
+
 
                 # send message to websocket service
                 msg = json.dumps(res_json)
                 self.data_socket_send.send(f"detection_data {msg}".encode())
-                self.data_socket_send.send(img_msg)
 
             except Exception as e:
                 print("Error occured sending or receiving data on ML client. " + str(e))
