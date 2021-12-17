@@ -112,7 +112,7 @@ class ZmqDataHandler(threading.Thread):
                     res_json[cards]['confidence'].append(c.confidence)
                     res_json[cards]['pair'].append(c.pair)
                     res_json[cards]['pair_centroid'].append(c.pair_centroid)
-
+                    res_json[cards]['estimated_bbox'].append(c.estimated_bbox)
 
                 # send message to websocket service
                 msg = json.dumps(res_json)
