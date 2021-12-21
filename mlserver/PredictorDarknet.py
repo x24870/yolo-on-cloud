@@ -67,9 +67,11 @@ class Detector(threading.Thread):
     def detect(self):
         while not self.stop_evt.is_set():
             frame = self.img_q.get()
-            if frame.img_np.any():
+            try:
                 print("got frame")
                 self.detect_once(frame.pc_id, frame.img_np)
+            except Exception as e:
+                print(e)
 
     def detect_once(self, pc_id, img_np):
         # perspective transform
