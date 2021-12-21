@@ -12,7 +12,7 @@ logger.setLevel(logging.INFO)
 class Card:
     def __init__(self, vertical, belongs, pattern, confidence, pair, pair_centroid, estimated_bbox):
         self.is_vertical = vertical # false: horizontal
-        self.belongs_to = belongs # false: banker
+        self.belongs = belongs # false: banker
         self.pattern = pattern
         self.confidence = confidence
         self.pair = pair
@@ -22,8 +22,8 @@ class Card:
 
     def __str__(self):
         vertical = 'v' if self.is_vertical else 'h'
-        belongs = 'player' if self.belongs_to else 'banker'
-        return f'{self.pattern} {self.value}: {vertical} {belongs} {self.confidence} {self.pair}'
+        belongs = 'player' if self.belongs else 'banker'
+        return f'{self.pattern} {self.value}: {vertical} {belongs} {self.confidence} {self.pair} {self.estimated_bbox}'
 
     def _get_value(self, pattern):
         if len(pattern) == 3: # rank is 10
@@ -50,17 +50,37 @@ def get_centroid(bbox):
         int(bbox[1] + bbox[3]/2)
         )
 
+def get_diagnal_bbox_list(bbox):
+    # specify vertical or horizontal (w < h: vertical)
+    is_vertical = True if bbox[2] < bbox[3] else False 
+    # TODO: find a better way to estimate diagnal bbox instead of fix value
+    if is_vertical: # estimate (125, -75)
+        dx_offset, dy_offset = 65, 60
+        dw, dh = 70, 80
+
+    else:
+        dx_offset, dy_offset = 100, -110
+        dw, dh = 70, 60
+
+    return [
+        [bbox[0]+dx_offset, bbox[1]+dy_offset],
+        [bbox[0]+dx_offset+dw, bbox[1]+dy_offset],
+        [bbox[0]+dx_offset+dw, bbox[1]+dy_offset+dh],
+        [bbox[0]+dx_offset, bbox[1]+dy_offset+dh],
+    ]
+
+
 def get_diagnal_bbox_contour(bbox):
     # specify vertical or horizontal (w < h: vertical)
     is_vertical = True if bbox[2] < bbox[3] else False 
     # TODO: find a better way to estimate diagnal bbox instead of fix value
     if is_vertical: # estimate (125, -75)
-        dx_offset, dy_offset = 60, 100
-        dw, dh = 70, 90
+        dx_offset, dy_offset = 65, 60
+        dw, dh = 70, 80
 
     else:
-        dx_offset, dy_offset = 120, -70
-        dw, dh = 60, 40
+        dx_offset, dy_offset = 80, -110
+        dw, dh = 80, 70
 
     return np.array([
         [bbox[0]+dx_offset, bbox[1]+dy_offset],
@@ -112,7 +132,8 @@ def process_cards_info(raw):
                     (r[2][0] + dia[2][0] + dia[2][2])/2,
                     (r[2][1] + dia[2][1] + dia[2][3])/2
                 )
-                estimated_bbox = get_diagnal_bbox_contour(r[2])
+                # TODO: just for visualize estimated bbox, remove in the future
+                estimated_bbox = get_diagnal_bbox_list(r[2])
             card = Card(
                 r[2][2]<r[2][3], # vertical
                 belongs, # belongs

@@ -105,6 +105,7 @@ class ZmqDataHandler(threading.Thread):
                 res_json[cards]['confidence'] = []
                 res_json[cards]['pair'] = []
                 res_json[cards]['pair_centroid'] = []
+                res_json[cards]['estimated_bbox'] = []
                 for c in res.cards:
                     res_json[cards]['is_vertical'].append(c.is_vertical)
                     res_json[cards]['belongs'].append(c.belongs)

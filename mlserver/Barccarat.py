@@ -21,7 +21,7 @@ class Desk():
         p_cards = []
         b_cards = []
         for c in cards:
-            if c.belongs_to: #player
+            if c.belongs: #player
                 p_cards.append(c)
             else:
                 b_cards.append(c)

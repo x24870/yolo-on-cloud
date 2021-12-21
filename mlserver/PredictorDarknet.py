@@ -2,9 +2,10 @@ import os
 import threading
 import glob
 import cv2
+import time
+import pandas as pd
 import numpy as np
 import darknet
-import pandas as pd
 from data_structures import DetectionResult
 from darknet_helper import convert2original
 import Barccarat
@@ -24,7 +25,6 @@ class Detector(threading.Thread):
         self.img_q = img_q
         self.res_q = res_q
         self.score_thresh = score_thresh
-        self.baccarat = Barccarat()
 
         # init darknet
         self.network, self.class_names, self.class_colors = darknet.load_network(
@@ -128,10 +128,22 @@ class Detector(threading.Thread):
             #bbs.append([left, top, right, buttom]) #TODO: Modify frontend to comply this order
             bbs.append([top, left, buttom, right])
 
-        print('class: {}, score: {}'.format(classes, scores))
+        print('class: {}, score: {}, bbs:{}'.format(classes, scores, bbs))
 
         # baccarat
+        # TODO: do not convert2original twice
+        detections = []
+        for i, _ in enumerate(classes):
+            x = bbs[i][1] # left
+            y = bbs[i][0] # top
+            w = bbs[i][3] - x # right - left
+            h = bbs[i][2] - y # bottom - top
+            new_bbs = [x, y, w, h]
+            detections.append([classes[i], scores[i], new_bbs])
+        print(detections)
         cards = cardp.process_cards_info(detections)
+        print('------------------------')
+        print(cards)
 
         res = DetectionResult(
             pc_id,
