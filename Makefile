@@ -1,7 +1,7 @@
 PROJECT_ID=jigentec-services
-IMPORT_PATH=github.com/jigentec/${SERVICE_NAME}
+SERVICE_NAME=yolo-on-cloud
 GIT_COMMIT_HASH=$(shell git rev-parse HEAD | cut -c -16)
-LOCAL_IMAGE=${PROJECT_ID}/${SERVICE_NAME}:${GIT_COMMIT_HASH}
+DOCKER_REPO=x24870/${SERVICE_NAME}
 
 .PHONY: all deps creds docker deploy run clean
 
@@ -19,13 +19,14 @@ docker:
 	@[ -z "$(shell git status --porcelain)" ] || \
 		(echo -e "\033[0;31mYou have uncommitted local changes.\033[0m" ; \
 		 echo -e "\033[0;31mCommit/stash them before building.\033[0m" ; false)
-	docker build -t x24870/yolo-on-cloud .
+	docker build -t ${DOCKER_REPO} .
+	docker push ${DOCKER_REPO}
 
 deploy:
-	nvidia-docker run -itd --network host ${LOCAL_IMAGE}
+	nvidia-docker run -itd --network host ${DOCKER_REPO}
 
 run:
-	nvidia-docker run -it --network host ${LOCAL_IMAGE}
+	nvidia-docker run -it --network host ${DOCKER_REPO}
 
 clean:
 	rm -f ./${SERVICE_NAME}
